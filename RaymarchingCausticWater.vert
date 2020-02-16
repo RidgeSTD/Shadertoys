@@ -144,11 +144,11 @@
     float H = 0.0;
     vec3 normal(vec2 pos, float e) {
         vec2 ex = vec2(e, 0);
-        H = getWaves(pos.xy * 0.1, WAVE_NORMAL_COMPLEXITY);
+        H = getWaves(pos.xy, WAVE_NORMAL_COMPLEXITY);
         vec3 a = vec3(pos.x, H, pos.y);
         return normalize(cross(
-            normalize(a - vec3(pos.x - e, getWaves(pos.xy * 0.1 - ex.xy * 0.1, WAVE_NORMAL_COMPLEXITY), pos.y)),
-            normalize(a - vec3(pos.x, getWaves(pos.xy * 0.1 + ex.yx * 0.1, WAVE_NORMAL_COMPLEXITY), pos.y + e))));
+            normalize(a - vec3(pos.x - e, getWaves(pos.xy - ex.xy, WAVE_NORMAL_COMPLEXITY), pos.y)),
+            normalize(a - vec3(pos.x, getWaves(pos.xy + ex.yx, WAVE_NORMAL_COMPLEXITY), pos.y + e))));
     }
 
     // ==================  end of waves  ==================
@@ -255,14 +255,13 @@
         if (p.z >= 0.) {
             if (objectID == OBJ_WATER) {
                 // refraction
-                vec3 N = normal(p.xz, 0.001, WAVE_SIZE);
-                vec2 velocity = N.xz * (1.0 - N.y);
-                N = mix(vec3(0.0, 1.0, 0.0), N, 1.0 / (dist * dist * 0.01 + 1.0));
+                vec3 N = normal(p.xz, 0.01);
+                vec3 R = reflect(ray_dir, N);
+                vec3 T = refract(ray_dir, N, .66666667);
                 // here the eta is 1.5, hence ((n1-n2)/(n1+n2))^2=0.04
                 float fresnel =
                     (0.04 + (1.0 - 0.04) * (pow(1.0 - max(0.0, dot(-N, ray_dir)), 5.0)));  // Schlick's approximation
-                vec3 R = reflect(ray_dir, N);
-                vec3 T = refract(ray_dir, N, .66666667);
+                
                 vec3 refractColor = vec3(0);
                 vec3 newOri = vec3(p.x, p.y - 0.6, p.z);
 
@@ -289,6 +288,10 @@
                 }
 
                 color = fresnel * cheap_light_reflect(newOri, R) + (1. - fresnel) * refractColor;
+                
+                color = cheap_light_reflect(newOri, R);
+                return R;
+                
             } else {
                 if (objectID == OBJ_FLOOR)
                     color = whiteWallColor;
