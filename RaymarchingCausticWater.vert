@@ -17,7 +17,7 @@
     #define DRAG_MULT 0.048
 
     #define PI 3.14159265359
-    #define ZERO 1e-20
+    #define ZERO 1e-7
     #define EXPOSURE 34.
     #define GAMMA 2.1
     #define SOFT_SHADOWS_FACTOR 4.
@@ -43,7 +43,9 @@
     #define WATER_BLUE_MIX .7
 
     // RGB wavelengths: 650nm, 510nm, 475nm
-    const vec3 lightColor = vec3(16.86, 8.76 + 2., 3.2 + .5);
+    // const vec3 lightColor = vec3(16.86, 8.76 + 2., 3.2 + .5);
+    // RGB wavelengths: 650nm, 510nm, 475nm
+    const vec3 lightColor = vec3(16.86, 16.86, 16.86);
     const vec3 lightDiffuseColor = vec3(.78);
     const vec3 leftWallColor = vec3(.611, .0555, .062);
     const vec3 rightWallColor = vec3(.117, .4125, .115);
@@ -51,7 +53,7 @@
     const vec3 waterBlueColor = vec3(0.00, 0.52, 0.99);
     const vec3 cameraTarget = vec3(556, 548.8, 559.2) * .5;
 
-    const vec3 lightBound = vec3(65, 0.05, 65);
+    const vec3 lightBound = vec3(580, 0.05, 580);
 
     bool isThroughWater = false;
 
@@ -232,7 +234,7 @@
     }
 
     float ambientOcclusion(vec3 p, vec3 n) {
-        float step = 8.;
+        float step =8.;
         float ao = 0.;
         float dist;
         for (int i = 1; i <= 3; i++) {
@@ -255,7 +257,7 @@
         if (p.z >= 0.) {
             if (objectID == OBJ_WATER) {
                 // refraction
-                vec3 N = normal(p.xz, 0.01);
+                vec3 N = normal(p.xz, 0.1);
                 vec3 R = reflect(ray_dir, N);
                 vec3 T = refract(ray_dir, N, .66666667);
                 // here the eta is 1.5, hence ((n1-n2)/(n1+n2))^2=0.04
@@ -264,9 +266,9 @@
                 
                 vec3 refractColor = vec3(0);
                 vec3 newOri = vec3(p.x, p.y - 0.6, p.z);
-
-                if (length(R) > ZERO) {
-                    R = normalize(R);
+                
+                if (length(T) > ZERO) {
+                    T = normalize(T);
                     int newIterations;
                     objectID = raymarch(newOri, T, dist, p, newIterations);
                     if (objectID == OBJ_FLOOR)
@@ -288,9 +290,8 @@
                 }
 
                 color = fresnel * cheap_light_reflect(newOri, R) + (1. - fresnel) * refractColor;
-                
-                color = cheap_light_reflect(newOri, R);
-                return R;
+                // color = (1. - fresnel) * refractColor;
+                //return color;
                 
             } else {
                 if (objectID == OBJ_FLOOR)
@@ -307,7 +308,6 @@
                     color = lightDiffuseColor;
                 else if (objectID == OBJ_TALLBLOCK)
                     color = whiteWallColor;
-                vec3 pFrontWall = ray_start - ray_dir * ray_start.z;
                 if (_waterInte) color = mix(color, waterBlueColor, WATER_BLUE_MIX);
             }
 
@@ -378,11 +378,12 @@
 
     void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         vec2 resolution = iResolution.xy;
+        vec2 uv = (fragCoord - .5 * iResolution.xy) / iResolution.y;
         vec2 mouse = min(iMouse.xy / iResolution.xy, vec2(1));
 
         vec3 ray_start = vec3(0, 0, -1.4);
         vec3 color = vec3(0);
-        if (ANTIALIAS_ALWAYS || time < 5.) {
+        if (ANTIALIAS_ALWAYS) {
             // ANTIALIAS
             float d_ang = 2. * PI / float(ANTIALIAS_SAMPLES);
             float ang = d_ang * .333;
@@ -390,6 +391,7 @@
             for (int i = 0; i < ANTIALIAS_SAMPLES; i++) {
                 vec2 position = vec2((fragCoord.x + cos(ang) * r - resolution.x * .5) / resolution.y,
                                     (fragCoord.y + sin(ang) * r - resolution.y * .5) / resolution.y);
+                
                 vec3 ray_s = moveCamera(ray_start);
                 vec3 ray_dir = rotateCamera(ray_s, normalize(vec3(position, 0) - ray_start));
                 color += render(ray_s, ray_dir);
@@ -398,10 +400,9 @@
             color /= float(ANTIALIAS_SAMPLES);
         } else {
             // NO ANTIALIAS
-            vec2 position =
-                vec2((fragCoord.x - resolution.x * .5) / resolution.y, (fragCoord.y - resolution.y * .5) / resolution.y);
             vec3 ray_s = moveCamera(ray_start);
-            vec3 ray_dir = rotateCamera(ray_s, normalize(vec3(position, 0) - ray_start));
+            vec3 ray_dir = rotateCamera(ray_s, normalize(vec3(uv, 0) - ray_start));
+            ray_dir = normalize(vec3(uv, 0) - ray_start);
             color += render(ray_s, ray_dir);
         }
 
