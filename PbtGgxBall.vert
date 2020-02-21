@@ -1,7 +1,7 @@
 #define SPHERE_N 1
 #define LIGHT_N 2
-#define AMBIENT_WEIGHT 0.1
-#define SPEED 2.
+#define AMBIENT_WEIGHT 0.02
+#define SPEED 1.
 
 #define SPHERE_TYPE 1
 
@@ -11,6 +11,8 @@
 #define INF 10000000000.0f
 #define PI 3.141592653589793
 #define TWOPI 6.283185307179586
+
+#define saturate(x) clamp(x, 0., 1.)
 
 struct Ray {
     vec3 origin;
@@ -69,7 +71,7 @@ float SphereIntersect(Ray r, Sphere s) {
     vec3 L = s.center - r.origin;
     float d = length(L);
     float d2 = d * d;
-    float cos_theta = dot(normalize(L), r.direction);
+    float cos_theta = saturate(dot(normalize(L), r.direction));
     float cos_theta2 = cos_theta * cos_theta;
     if (cos_theta <= 0.) {
         return INF;
@@ -107,7 +109,7 @@ struct GlazeMaterial {
     float f0, roughness;
 };
 
-const GlazeMaterial BallMaterial = GlazeMaterial(0.1, .3);
+const GlazeMaterial BallMaterial = GlazeMaterial(0.2, 0.4);
 
 Sphere spheres[SPHERE_N];
 LightSource lights[LIGHT_N];
@@ -118,7 +120,7 @@ void SetupScene(float frame) {
     spheres[0] = Sphere(0.3, vec3(0, 0, 0), SPHERE_TYPE);
     lights[0] = LightSource(normalize(vec3(1, -1, 1)), 1., vec3(1, 1, 1), DIRECTIONAL_LIGHT_TYPE);
     lights[1] = LightSource(vec3(2. * cos(frame), -2., 2. * sin(frame)), 1., vec3(1, 1, 1), POINT_LIGHT_TYPE);
-    camera = Camera(vec3(-cos(frame), 0, sin(frame)), 45., vec3(0, 0, 0), normalize(vec3(0, 1, 0)));
+    camera = Camera(vec3(-cos(frame), 0., sin(frame)), 45., vec3(0, 0, 0), normalize(vec3(0, 1, 0)));
     View = lookAt(camera);
 }
 
@@ -135,7 +137,7 @@ vec3 Lambertian(Intersection i, LightSource light) {
     } else {
         L = -normalize(light.position);
     }
-    return i.baseColor.xyz * i.roughness * light.color * intensity * clamp(dot(i.N, L), 0., 1.) +
+    return i.baseColor.xyz * i.roughness * light.color * intensity * saturate(dot(i.N, L)) +
            AMBIENT_WEIGHT * texture(iChannel2, i.N).xyz;
 }
 
@@ -147,7 +149,7 @@ vec3 PerfectReflection(Intersection i, LightSource light) {
 // Fresnel term, Schlick's approximation
 // Schlick C. An inexpensive BRDF model for physically‐based rendering[C]//Computer graphics forum. Edinburgh, UK:
 // Blackwell Science Ltd, 1994, 13(3): 233-246.
-float F_Schlick(vec3 L, vec3 H_r, float f0) { return f0 + (1. - f0) * pow((1. - dot(L, H_r)), 5.); }
+float F_Schlick(vec3 L, vec3 H_r, float f0) { return f0 + (1. - f0) * pow((1. - saturate(dot(L, H_r))), 5.); }
 
 // Bidirectional shadowing-masking function
 // Used Smith G Approximate, according to Walter et al.
@@ -164,16 +166,25 @@ float G_GgxSmith(float LdotN, float VdotN, float g) {
 // Trowbridge-Reitz GGX function
 float D_GGX_TR(vec3 N, vec3 H, float d) {
     float d2 = d * d;
-    float dotNH = dot(N, H);
+    float dotNH = saturate(dot(N, H));
     float denomenator = dotNH * dotNH * (d2 - 1.) + 1.;
     return d2 / (PI * denomenator * denomenator + 1e-7);
 }
 
 vec3 GGX(Intersection i, LightSource light) {
-    vec3 L = light.type == DIRECTIONAL_LIGHT_TYPE ? -normalize(light.position) : normalize(light.position - i.P.xyz);
+    vec3 L;
+    float intensity = light.intensity;
+    if (light.type == POINT_LIGHT_TYPE) {
+        L = light.position - i.P.xyz;
+        float d = length(L);
+        L = normalize(L);
+        intensity /= min(d * d, 1.);
+    } else {
+        L = -normalize(light.position);
+    }
     vec3 H = normalize(i.V + L);
-    float LdotN = clamp(dot(L, i.N), 0., 1.);
-    float VdotN = clamp(dot(i.V, i.N), 0., 1.);
+    float LdotN = saturate(dot(L, i.N));
+    float VdotN = saturate(dot(i.V, i.N));
 
     float perceptualRoughness = i.roughness * i.roughness;
     float roughness = max(perceptualRoughness, 0.002);
@@ -186,7 +197,9 @@ vec3 GGX(Intersection i, LightSource light) {
     // lambert model as diffuse part
     vec3 diffuseLightColor = Lambertian(i, light);
 
-    return diffuseLightColor + texture(iChannel0, i.N).xyz * F + light.color * light.intensity * ggx;
+    return diffuseLightColor 
+        + texture(iChannel0, i.N).xyz * F * max(0., dot(i.N, L))
+        + light.color * intensity * ggx;
 }
 
 // ----------------  shading technics ends  ----------------
@@ -215,8 +228,6 @@ vec3 Radiance(Ray r) {
             Intersection intersection = Intersection(P, N, -r.direction, texture(iChannel1, PolarWrap(N)),
                                                      BallMaterial.f0, BallMaterial.roughness);
 
-            // col += Lambertian(intersection, light);
-            // col += PerfectReflection(intersection, light);
             col += GGX(intersection, light);
         }
     } else {
