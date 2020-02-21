@@ -21,9 +21,27 @@ struct Ray {
 
 struct Camera {
     vec3 position;
-
-    // TODO direction, fov etc...
+    float fov;
+    vec3 target;
+    vec3 up;
 };
+
+mat4 lookAt(Camera c) {
+    vec4 D = vec4(normalize(c.target - c.position), 0);
+    vec4 U = vec4(c.up, 0);
+    vec4 R = vec4(cross(D.xyz, U.xyz), 0);
+    vec4 P = vec4(c.position, 1);
+    mat4 m1 = mat4(vec4(R.x, U.x, D.x, 0), 
+                    vec4(R.y, U.y, D.y, 0),
+                    vec4(R.z, U.z, D.z, 0),
+                    vec4(0, 0, 0, 1));
+    mat4 m2 = mat4(vec4(1, 0, 0, 0),
+                    vec4(0, 1, 0, 0),
+                    vec4(0, 0, 1, 0),
+                    vec4(-P.xyz, 1));
+    mat4 newView = m1 * m2;
+    return newView;
+}
 
 struct LightSource {
     vec3 position;
@@ -35,8 +53,6 @@ struct LightSource {
 struct Sphere {
     float radius;
     vec3 center;
-    vec3 emission;
-    vec3 color;
     int type;
 };
 
@@ -96,12 +112,14 @@ const GlazeMaterial BallMaterial = GlazeMaterial(0.1, .3);
 Sphere spheres[SPHERE_N];
 LightSource lights[LIGHT_N];
 Camera camera;
+mat4 View;
 
-void SetupScene() {
-    spheres[0] = Sphere(0.3, vec3(0, 0, 1), vec3(1, 1, 1), vec3(1, 0, 0), SPHERE_TYPE);
+void SetupScene(float frame) {
+    spheres[0] = Sphere(0.3, vec3(0, 0, 0), SPHERE_TYPE);
     lights[0] = LightSource(normalize(vec3(1, -1, 1)), 1., vec3(1, 1, 1), DIRECTIONAL_LIGHT_TYPE);
-    lights[1] = LightSource(vec3(2. * cos(iTime * SPEED), -2., 2. * sin(iTime * SPEED)), 1., vec3(1, 1, 1), POINT_LIGHT_TYPE);
-    camera = Camera(vec3(0, 0, 0));
+    lights[1] = LightSource(vec3(2. * cos(frame), -2., 2. * sin(frame)), 1., vec3(1, 1, 1), POINT_LIGHT_TYPE);
+    camera = Camera(vec3(-cos(frame), 0, sin(frame)), 45., vec3(0, 0, 0), normalize(vec3(0, 1, 0)));
+    View = lookAt(camera);
 }
 
 // ----------------  shading technics  ----------------
@@ -113,7 +131,7 @@ vec3 Lambertian(Intersection i, LightSource light) {
         L = light.position - i.P.xyz;
         float d = length(L);
         L = normalize(L);
-        intensity /= min(d*d, 1.);
+        intensity /= min(d * d, 1.);
     } else {
         L = -normalize(light.position);
     }
@@ -136,8 +154,8 @@ float F_Schlick(vec3 L, vec3 H_r, float f0) { return f0 + (1. - f0) * pow((1. - 
 // Ref: http://jcgt.org/published/0003/02/03/paper.pdf
 float G_GgxSmith(float LdotN, float VdotN, float g) {
     float g2 = g * g;
-    float lambdaV    = LdotN * sqrt((-VdotN * g2 + VdotN) * VdotN + g2);
-    float lambdaL    = VdotN * sqrt((-LdotN * g2 + LdotN) * LdotN + g2);
+    float lambdaV = LdotN * sqrt((-VdotN * g2 + VdotN) * VdotN + g2);
+    float lambdaL = VdotN * sqrt((-LdotN * g2 + LdotN) * LdotN + g2);
     // Simplify visibility term: (2.0f * NdotL * NdotV) /  ((4.0f * NdotL * NdotV) * (lambda_v + lambda_l + 1e-7f));
     return 0.5 / (lambdaV + lambdaL + 1e-7f);
 }
@@ -161,16 +179,14 @@ vec3 GGX(Intersection i, LightSource light) {
     float roughness = max(perceptualRoughness, 0.002);
     float F = F_Schlick(L, H, i.metallic);
     float G = G_GgxSmith(LdotN, VdotN, roughness);
-    float _d = roughness  * roughness;
+    float _d = roughness * roughness;
     float D = D_GGX_TR(i.N, H, _d);
     float ggx = F * G * D;
 
     // lambert model as diffuse part
     vec3 diffuseLightColor = Lambertian(i, light);
 
-    return diffuseLightColor 
-        + texture(iChannel0, i.N).xyz * F 
-        + light.color * light.intensity * ggx;
+    return diffuseLightColor + texture(iChannel0, i.N).xyz * F + light.color * light.intensity * ggx;
 }
 
 // ----------------  shading technics ends  ----------------
@@ -196,7 +212,8 @@ vec3 Radiance(Ray r) {
             LightSource light = lights[i];
             vec4 P = vec4(r.origin + r.direction * t_min, 1.);
             vec3 N = normalize(P.xyz - spheres[i].center);
-            Intersection intersection = Intersection(P, N, -r.direction, texture(iChannel1, PolarWrap(N)), BallMaterial.f0, BallMaterial.roughness);
+            Intersection intersection = Intersection(P, N, -r.direction, texture(iChannel1, PolarWrap(N)),
+                                                     BallMaterial.f0, BallMaterial.roughness);
 
             // col += Lambertian(intersection, light);
             // col += PerfectReflection(intersection, light);
@@ -214,9 +231,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
     vec3 col = vec3(uv, 0);
 
-    SetupScene();
+    SetupScene(iTime * SPEED);
 
-    Ray r = Ray(camera.position, normalize(vec3(uv, 1)), 0., 999.);
+    Ray r = Ray(camera.position, normalize(View * vec4(uv, 1, 0)).xyz, 0., 999.);
 
     col = Radiance(r);
 
