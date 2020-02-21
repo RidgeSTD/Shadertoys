@@ -1,10 +1,12 @@
 #define SPHERE_N 1
-#define LIGHT_N 1
+#define LIGHT_N 2
 #define AMBIENT_WEIGHT 0.1
+#define SPEED 2.
 
 #define SPHERE_TYPE 1
 
 #define DIRECTIONAL_LIGHT_TYPE 51
+#define POINT_LIGHT_TYPE 52
 
 #define INF 10000000000.0f
 #define PI 3.141592653589793
@@ -97,15 +99,25 @@ Camera camera;
 
 void SetupScene() {
     spheres[0] = Sphere(0.3, vec3(0, 0, 1), vec3(1, 1, 1), vec3(1, 0, 0), SPHERE_TYPE);
-    lights[0] = LightSource(normalize(vec3(0, -1, 1)), 1., vec3(1, 1, 1), DIRECTIONAL_LIGHT_TYPE);
+    lights[0] = LightSource(normalize(vec3(1, -1, 1)), 1., vec3(1, 1, 1), DIRECTIONAL_LIGHT_TYPE);
+    lights[1] = LightSource(vec3(2. * cos(iTime * SPEED), -2., 2. * sin(iTime * SPEED)), 1., vec3(1, 1, 1), POINT_LIGHT_TYPE);
     camera = Camera(vec3(0, 0, 0));
 }
 
 // ----------------  shading technics  ----------------
 
 vec3 Lambertian(Intersection i, LightSource light) {
-    vec3 L = light.type == DIRECTIONAL_LIGHT_TYPE ? -normalize(light.position) : normalize(light.position - i.P.xyz);
-    return i.baseColor.xyz * i.roughness * light.color * light.intensity * dot(i.N, L) +
+    vec3 L;
+    float intensity = light.intensity;
+    if (light.type == POINT_LIGHT_TYPE) {
+        L = light.position - i.P.xyz;
+        float d = length(L);
+        L = normalize(L);
+        intensity /= min(d*d, 1.);
+    } else {
+        L = -normalize(light.position);
+    }
+    return i.baseColor.xyz * i.roughness * light.color * intensity * clamp(dot(i.N, L), 0., 1.) +
            AMBIENT_WEIGHT * texture(iChannel2, i.N).xyz;
 }
 
