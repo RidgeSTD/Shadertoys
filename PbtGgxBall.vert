@@ -1,6 +1,6 @@
 #define SPHERE_N 1
 #define LIGHT_N 1
-#define BACKGROUND vec3(0, 0.17, 0.19)
+#define AMBIENT_WEIGHT 0.1
 
 #define SPHERE_TYPE 1
 
@@ -35,7 +35,6 @@ struct Sphere {
     vec3 center;
     vec3 emission;
     vec3 color;
-    float roughness;
     int type;
 };
 
@@ -54,19 +53,19 @@ float SphereIntersect(Ray r, Sphere s) {
     float d2 = d * d;
     float cos_theta = dot(normalize(L), r.direction);
     float cos_theta2 = cos_theta * cos_theta;
-    if (cos_theta <= 0.0) {
+    if (cos_theta <= 0.) {
         return INF;
     }
-    float sin_theta2 = 1.0 - cos_theta2;
+    float sin_theta2 = 1. - cos_theta2;
     float r2 = s.radius * s.radius;
     float intersect_half2 = r2 - d2 * sin_theta2;
-    if (intersect_half2 < 0.0) {
+    if (intersect_half2 < 0.) {
         return INF;
     }
     float center_project_dist = d * cos_theta;
     float intersect_half = sqrt(intersect_half2);
     float t0 = center_project_dist - intersect_half;
-    if (t0 < 0.0) {
+    if (t0 < 0.) {
         return center_project_dist + intersect_half;
     } else {
         return t0;
@@ -75,77 +74,91 @@ float SphereIntersect(Ray r, Sphere s) {
 
 vec2 Polar(vec3 norm) {
     vec2 res;
-    res.y = (norm.y + 1.0) / 2.0;
+    res.y = (norm.y + 1.) / 2.;
     res.x = atan(norm.z, norm.x) / TWOPI;
     return res.xy;
 }
 
 vec2 PolarWrap(vec3 norm) {
     vec2 res = Polar(norm);
-    res.x = abs(res.x - 0.5) * 2.0;
+    res.x = abs(res.x - 0.5) * 2.;
     return res;
 }
+
+struct GlazeMaterial {
+    float f0, roughness;
+};
+
+const GlazeMaterial BallMaterial = GlazeMaterial(0.25, .6);
 
 Sphere spheres[SPHERE_N];
 LightSource lights[LIGHT_N];
 Camera camera;
 
 void SetupScene() {
-    spheres[0] = Sphere(0.3, vec3(0, 0, 1), vec3(1, 1, 1), vec3(1, 0, 0), 0.5, SPHERE_TYPE);
-    lights[0] = LightSource(normalize(vec3(0, -1, 0)), 0.3, vec3(1, 1, 1), DIRECTIONAL_LIGHT_TYPE);
+    spheres[0] = Sphere(0.3, vec3(0, 0, 1), vec3(1, 1, 1), vec3(1, 0, 0), SPHERE_TYPE);
+    lights[0] = LightSource(normalize(vec3(0, -1, 1)), 1., vec3(1, 1, 1), DIRECTIONAL_LIGHT_TYPE);
     camera = Camera(vec3(0, 0, 0));
 }
 
 // ----------------  shading technics  ----------------
 
 vec3 Lambertian(Intersection i, LightSource light) {
-    return clamp(light.color * light.intensity * dot(i.N, -light.position), 0.0, 1.0);
+    vec3 L = light.type == DIRECTIONAL_LIGHT_TYPE ? -normalize(light.position) : normalize(light.position - i.P.xyz);
+    return i.baseColor.xyz * i.roughness * light.color * light.intensity * dot(i.N, L) +
+           AMBIENT_WEIGHT * texture(iChannel2, i.N).xyz;
 }
 
 vec3 PerfectReflection(Intersection i, LightSource light) {
     vec3 R = reflect(-i.V, i.N);
-    return texture(iChannel1, R).xyz;
+    return texture(iChannel0, R).xyz;
 }
 
 // Fresnel term, Schlick's approximation
 // Schlick C. An inexpensive BRDF model for physically‐based rendering[C]//Computer graphics forum. Edinburgh, UK:
 // Blackwell Science Ltd, 1994, 13(3): 233-246.
-float F_Schlick(vec3 L, vec3 H_r, float F0) { return F0 + (1.0 - F0) * pow((1.0 - dot(L, H_r)), 5.0); }
-
-float G_Smith(float NdotV) {
-    const float _K = 1.0;
-    return NdotV / (NdotV * (1.0 - _K) + _K);
-}
+float F_Schlick(vec3 L, vec3 H_r, float f0) { return f0 + (1. - f0) * pow((1. - dot(L, H_r)), 5.); }
 
 // Bidirectional shadowing-masking function
 // Used Smith G Approximate, according to Walter et al.
-float G_GGX(float LdotN, float VdotN) { return G_Smith(LdotN) * G_Smith(VdotN); }
+// Ref: http://jcgt.org/published/0003/02/03/paper.pdf
+float G_GgxSmith(float LdotN, float VdotN, float g) {
+    float g2 = g * g;
+    float lambdaV    = LdotN * sqrt((-VdotN * g2 + VdotN) * VdotN + g2);
+    float lambdaL    = VdotN * sqrt((-LdotN * g2 + LdotN) * LdotN + g2);
+    // Simplify visibility term: (2.0f * NdotL * NdotV) /  ((4.0f * NdotL * NdotV) * (lambda_v + lambda_l + 1e-7f));
+    return 0.5 / (lambdaV + lambdaL + 1e-7f);
+}
 
 // Microfacet distribution function
 // Trowbridge-Reitz GGX function
-float D_GGX_TR(vec3 N, vec3 H) {
-    const float _D =5.0;
-    float d2 = _D * _D;
-    return d2 / (PI * pow((pow(dot(N, H), 2.0) * (d2 - 1.0) + 1.0), 2.0));
+float D_GGX_TR(vec3 N, vec3 H, float d) {
+    float d2 = d * d;
+    float dotNH = dot(N, H);
+    float denomenator = dotNH * dotNH * (d2 - 1.) + 1.;
+    return d2 / (PI * denomenator * denomenator + 1e-7);
 }
 
 vec3 GGX(Intersection i, LightSource light) {
-    vec3 L = light.type == DIRECTIONAL_LIGHT_TYPE ? light.position : normalize(light.position - i.P.xyz);
-    vec3 H = i.V + L;
-    float LdotN = dot(L, i.N);
-    float VdotN = dot(i.V, i.N);
+    vec3 L = light.type == DIRECTIONAL_LIGHT_TYPE ? -normalize(light.position) : normalize(light.position - i.P.xyz);
+    vec3 H = normalize(i.V + L);
+    float LdotN = clamp(dot(L, i.N), 0., 1.);
+    float VdotN = clamp(dot(i.V, i.N), 0., 1.);
 
-    float F = F_Schlick(L, H, 1.0);
-    float G = G_GGX(LdotN, VdotN);
-    float D = D_GGX_TR(i.N, H);
-    float fr = F * G * D / 4. / LdotN / VdotN;
+    float perceptualRoughness = i.roughness * i.roughness;
+    float roughness = max(perceptualRoughness, 0.002);
+    float F = F_Schlick(L, H, i.metallic);
+    float G = G_GgxSmith(LdotN, VdotN, roughness);
+    float _d = roughness  * roughness;
+    float D = D_GGX_TR(i.N, H, _d);
+    float ggx = F * G * D;
 
     // lambert model as diffuse part
-    vec3 diffuseLightColor = i.roughness * light.color * light.intensity * clamp(dot(i.N, L), 0.0, 1.0);
-    const float ka = 0.3;
-    diffuseLightColor += ka * texture(iChannel2, i.N).xyz;
+    vec3 diffuseLightColor = Lambertian(i, light);
 
-    return i.baseColor.xyz * light.intensity + (diffuseLightColor + fr * texture(iChannel1, i.N).xyz);
+    return diffuseLightColor 
+        + texture(iChannel0, i.N).xyz * F 
+        + light.color * light.intensity * ggx;
 }
 
 // ----------------  shading technics ends  ----------------
@@ -169,15 +182,16 @@ vec3 Radiance(Ray r) {
     if (t_min < INF) {
         for (int i = 0; i < LIGHT_N; i++) {
             LightSource light = lights[i];
-            vec4 P = vec4(r.origin + r.direction * t_min, 1.0);
+            vec4 P = vec4(r.origin + r.direction * t_min, 1.);
             vec3 N = normalize(P.xyz - spheres[i].center);
-            Intersection intersection = Intersection(P, N, -r.direction, texture(iChannel3, PolarWrap(N)), 0.5, 0.5);
+            Intersection intersection = Intersection(P, N, -r.direction, texture(iChannel1, PolarWrap(N)), BallMaterial.f0, BallMaterial.roughness);
+
             // col += Lambertian(intersection, light);
             // col += PerfectReflection(intersection, light);
             col += GGX(intersection, light);
         }
     } else {
-        col = texture(iChannel1, r.direction).xyz;
+        col = texture(iChannel0, r.direction).xyz;
     }
     return col;
 }
@@ -190,9 +204,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
     SetupScene();
 
-    Ray r = Ray(camera.position, normalize(vec3(uv, 1)), 0.0, 999.0);
+    Ray r = Ray(camera.position, normalize(vec3(uv, 1)), 0., 999.);
 
     col = Radiance(r);
 
-    fragColor = vec4(col, 1.0);
+    fragColor = vec4(col, 1.);
 }
