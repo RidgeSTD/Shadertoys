@@ -91,7 +91,7 @@ struct GlazeMaterial {
     float f0, roughness;
 };
 
-const GlazeMaterial BallMaterial = GlazeMaterial(0.25, .6);
+const GlazeMaterial BallMaterial = GlazeMaterial(0.1, .3);
 
 Sphere spheres[SPHERE_N];
 LightSource lights[LIGHT_N];
