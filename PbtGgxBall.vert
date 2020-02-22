@@ -1,7 +1,25 @@
+// The MIT License
+// Copyright © 2020 Ridge/winlandiano
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+// documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright
+// notice and this permission notice shall be included in all copies or substantial portions of the Software. THE
+// SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// A simple PBR shader with environment map. Forward shading, directional+point light sources. Unity-style approximation.
+// GGX: Walter et al.
+// Fresnel term: Schlick C.
+// Visibility/geometry term: Smith shadow-masking
+// Distribution term: Trowbridge-Reitz
+
 #define SPHERE_N 1
 #define LIGHT_N 2
-#define AMBIENT_WEIGHT 0.02
-#define SPEED 1.
+#define AMBIENT_WEIGHT 0.3
+#define SPEED 0.5
 
 #define SPHERE_TYPE 1
 
@@ -13,6 +31,11 @@
 #define TWOPI 6.283185307179586
 
 #define saturate(x) clamp(x, 0., 1.)
+
+// ----------------  optional function macros  ----------------
+#define CAMERA_ANIMATION
+#define LIGHT_ANIMATION
+// ----------------  optional function ends  ----------------
 
 struct Ray {
     vec3 origin;
@@ -33,11 +56,11 @@ mat4 lookAt(Camera c) {
     vec4 U = vec4(c.up, 0);
     vec4 R = vec4(cross(D.xyz, U.xyz), 0);
     vec4 P = vec4(c.position, 1);
-    mat4 m1 = mat4(vec4(R.x, U.x, D.x, 0), 
+    mat4 m1 = mat4( vec4(R.x, U.x, D.x, 0), 
                     vec4(R.y, U.y, D.y, 0),
                     vec4(R.z, U.z, D.z, 0),
                     vec4(0, 0, 0, 1));
-    mat4 m2 = mat4(vec4(1, 0, 0, 0),
+    mat4 m2 = mat4( vec4(1, 0, 0, 0),
                     vec4(0, 1, 0, 0),
                     vec4(0, 0, 1, 0),
                     vec4(-P.xyz, 1));
@@ -119,8 +142,16 @@ mat4 View;
 void SetupScene(float frame) {
     spheres[0] = Sphere(0.3, vec3(0, 0, 0), SPHERE_TYPE);
     lights[0] = LightSource(normalize(vec3(1, -1, 1)), 1., vec3(1, 1, 1), DIRECTIONAL_LIGHT_TYPE);
-    lights[1] = LightSource(vec3(2. * cos(frame), -2., 2. * sin(frame)), 1., vec3(1, 1, 1), POINT_LIGHT_TYPE);
-    camera = Camera(vec3(-cos(frame), sin(frame), sin(frame)), 45., vec3(0, 0, 0), normalize(vec3(0, 1, 0)));
+#ifdef LIGHT_ANIMATION
+    lights[1] = LightSource(vec3(2. * cos(5. * frame), 2. * sin(5. * frame), 0.), 1., vec3(1, 1, 1), POINT_LIGHT_TYPE);
+#else
+    lights[1] = LightSource(vec3(-2., 2., 0.), 1., vec3(1, 1, 1), POINT_LIGHT_TYPE);
+#endif
+#ifdef CAMERA_ANIMATION
+    camera = Camera(1.5 * vec3(-cos(frame), 0., 1.5 * sin(frame)), 45., vec3(0, 0, 0), normalize(vec3(0, 1, 0)));
+#else
+    camera = Camera(vec3(-1., 0., 1.), 45., vec3(0, 0, 0), normalize(vec3(0, 1, 0)));
+#endif
     View = lookAt(camera);
 }
 
@@ -137,8 +168,8 @@ vec3 Lambertian(Intersection i, LightSource light) {
     } else {
         L = -normalize(light.position);
     }
-    return i.baseColor.xyz * i.roughness * light.color * intensity * saturate(dot(i.N, L)) +
-           AMBIENT_WEIGHT * texture(iChannel2, i.N).xyz;
+    return i.baseColor.xyz * i.roughness * light.color * intensity * saturate(dot(i.N, L));
+           // + AMBIENT_WEIGHT * texture(iChannel2, i.N).xyz;
 }
 
 vec3 PerfectReflection(Intersection i, LightSource light) {
@@ -197,19 +228,20 @@ vec3 GGX(Intersection i, LightSource light) {
     // lambert model as diffuse part
     vec3 diffuseLightColor = Lambertian(i, light);
 
-    return diffuseLightColor 
-        + texture(iChannel0, i.N).xyz * F * max(0., dot(i.N, L))
+    vec3 HEnv = normalize(i.N + i.V);
+    float FEnv = F_Schlick(i.N, HEnv, i.metallic);
+    return diffuseLightColor
+        + texture(iChannel0, i.N).xyz * FEnv * AMBIENT_WEIGHT// * max(0., dot(i.N, L))
         + light.color * intensity * ggx;
 }
 
 // ----------------  shading technics ends  ----------------
 
-vec3 Radiance(Ray r) {
+vec3 Render(Ray r) {
     vec3 col = vec3(0);
 
     highp float t_min = INF;
     int idx = -1;
-    // first pass
     for (int i = 0; i < SPHERE_N; i++) {
         float t = SphereIntersect(r, spheres[i]);
         if (t < t_min) {
@@ -218,8 +250,6 @@ vec3 Radiance(Ray r) {
         }
     }
 
-    // second pass
-    // only directional light
     if (t_min < INF) {
         for (int i = 0; i < LIGHT_N; i++) {
             LightSource light = lights[i];
@@ -244,9 +274,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
     SetupScene(iTime * SPEED);
 
+    // place screen infront of camera, transform to world space
     Ray r = Ray(camera.position, normalize(inverse(View) * vec4(uv, 1, 0)).xyz, 0., 999.);
 
-    col = Radiance(r);
+    col = Render(r);
 
     fragColor = vec4(col, 1.);
 }
