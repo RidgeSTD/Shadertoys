@@ -120,7 +120,7 @@ void SetupScene(float frame) {
     spheres[0] = Sphere(0.3, vec3(0, 0, 0), SPHERE_TYPE);
     lights[0] = LightSource(normalize(vec3(1, -1, 1)), 1., vec3(1, 1, 1), DIRECTIONAL_LIGHT_TYPE);
     lights[1] = LightSource(vec3(2. * cos(frame), -2., 2. * sin(frame)), 1., vec3(1, 1, 1), POINT_LIGHT_TYPE);
-    camera = Camera(vec3(-cos(frame), 0., sin(frame)), 45., vec3(0, 0, 0), normalize(vec3(0, 1, 0)));
+    camera = Camera(vec3(-cos(frame), sin(frame), sin(frame)), 45., vec3(0, 0, 0), normalize(vec3(0, 1, 0)));
     View = lookAt(camera);
 }
 
@@ -244,7 +244,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
     SetupScene(iTime * SPEED);
 
-    Ray r = Ray(camera.position, normalize(View * vec4(uv, 1, 0)).xyz, 0., 999.);
+    Ray r = Ray(camera.position, normalize(inverse(View) * vec4(uv, 1, 0)).xyz, 0., 999.);
 
     col = Radiance(r);
 
