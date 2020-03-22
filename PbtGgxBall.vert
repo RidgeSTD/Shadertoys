@@ -254,7 +254,7 @@ vec3 Render(Ray r) {
         for (int i = 0; i < LIGHT_N; i++) {
             LightSource light = lights[i];
             vec4 P = vec4(r.origin + r.direction * t_min, 1.);
-            vec3 N = normalize(P.xyz - spheres[i].center);
+            vec3 N = normalize(P.xyz - spheres[idx].center);
             Intersection intersection = Intersection(P, N, -r.direction, texture(iChannel1, PolarWrap(N)),
                                                      BallMaterial.f0, BallMaterial.roughness);
 
