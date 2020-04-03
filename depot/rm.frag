@@ -21,7 +21,13 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     ro.xy += disp(ro.z)*dspAmp;
     
     // cam dir
-    float tgtDst = 3.5;
+    float focus = 3.5;
+    vec3 target = normalize(ro - vec3(disp(time + focus)*dspAmp, time + focus));
+    vec3 right = normalize(cross(target, vec3(0., 1., 0.)));
+    vec3 up = normalize(cross(right, target));
+    right = normalize(cross(target, up));
+    
+    vec3 rd = normalize((p.x*right + p.y*up) - target);
     
     vec3 col = vec3(mosPos, 0.);
     
