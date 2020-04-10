@@ -105,8 +105,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     col = mix( inner_col, outter_col, smoothstep(.4, .55, r + .1 * rim_var));
     
     // spot
-    //col *= 1. - smoothstep(.55, .85, texture(iChannel1, vec2(2. * uv.x, 1.3 * uv.y)).x);
-    //col = mix(vec3(0), col, 
+    f = smoothstep(.05, .34, fbm(20. * p));
+    col = mix(vec3(.2), col, f);
     
     
     
