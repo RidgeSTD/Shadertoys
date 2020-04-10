@@ -1,7 +1,6 @@
 //#define HAZEL_IRIS
 #define SAPHIR_IRIS
 
-
 #define PI 3.14159265359
 #define PI2 1.57079632679
 
@@ -10,17 +9,6 @@ float hash12(vec2 p) {
 	vec3 p3  = fract(vec3(p.xyx) * .1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return fract((p3.x + p3.y) * p3.z);
-}
-
-// https://www.unrealengine.com/en-US/blog/physically-based-shading-on-mobile
-vec3 EnvBRDFApprox( vec3 SpecularColor, float Roughness, float NoV )
-{
-	const vec4 c0 = vec4(-1, -0.0275, -0.572, 0.022);
-	const vec4 c1 = vec4( 1, 0.0425, 1.04, -0.04 );
-	vec4 r = Roughness * c0 + c1;
-	float a004 = min( r.x * r.x, exp2( -9.28 * NoV ) ) * r.x + r.y;
-	vec2 AB = vec2( -1.04, 1.04 ) * a004 + r.zw;
-	return SpecularColor * AB.x + AB.y;
 }
 
 float noise(vec2 p) {
@@ -49,12 +37,13 @@ float fbm(vec2 p) {
 }
 
 // exponentialy increase and decrease between 0 and 1
+// x follows sine wave
 float damping_step(float edge, float x) {
     edge = clamp(edge, 0., 1.);
     float f = smoothstep(-edge, edge, sin(x));
     float loose = log(max(f, 1e-7)) * .15 + 1.;
     float tight = -log(max(1. - f, 1e-7)) * .15;
-    f = step(0., cos(x));
+    f = step(0., cos(x)); // use derivative to determin convex direction
     float v = mix(tight, loose, f);
     v = clamp(v, 0., 1.);
     return v;
@@ -85,7 +74,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     float light_intensity = .1 + .6 * step(0., sin(time));
     // reaction delay
-    const float REACT_TIME = .6;
+    const float REACT_TIME = .6 + PI;
     time -= REACT_TIME;
     float pupil_var = .2 + damping_step(.5, time) * .2;
     time += REACT_TIME;
@@ -95,19 +84,19 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     vec3 col, inner_col, outter_col;
 #ifdef HAZEL_IRIS
     va = fbm(vec2(20. * a, r));
-   	outter_col = mix (vec3(.45, .25, .1), vec3(.6, .4, .1), fbm(vec2(2. * va, 20. * r)));
-    outter_col = mix(vec3(.35, .31, .25), outter_col, fbm(vec2(20. * va, r)));
-    inner_col = mix (vec3(.45, .25, .1), vec3(.6, .4, .1), fbm(vec2(1.5 * va, .5 * r)));
-    inner_col = mix(vec3(.35, .31, .25), inner_col, fbm(vec2(5. * va, 2. * r)));
+   	outter_col = mix (vec3(.4, .15, .07), vec3(.35, .15, .02), fbm(vec2(2. * va, 20. * r)));
+    outter_col = mix(vec3(.1, .06, .02), outter_col, fbm(vec2(20. * va, r)));
+    inner_col = mix (vec3(.25, .15, .1), vec3(.45, .25, .02), fbm(vec2(1.5 * va, .5 * r)));
+    inner_col = mix(vec3(.1, .06, .02), inner_col, fbm(vec2(5. * va, 2. * r)));
 #endif
 #ifdef SAPHIR_IRIS
-    outter_col = mix (vec3(.38,.34,.7), vec3(.7,.9,.92), fbm(vec2(2. * va, 20. * r)));
-    outter_col = mix(vec3(.6,.8,1.), outter_col, fbm(vec2(20. * va, r)));
-    inner_col = mix (vec3(.38, .34, .7), vec3(.7,.9,.92), fbm(vec2(1.5 * va, .5 * r)));
+    outter_col = mix (vec3(.1,.24,.7), vec3(.1,.5, 0.7), fbm(vec2(2. * va, 20. * r)));
+    outter_col = mix(vec3(.3,.45,.7), outter_col, fbm(vec2(20. * va, r)));
+    inner_col = mix (vec3(.18,.14,.7), vec3(.1,.5, .7), fbm(vec2(1.5 * va, .5 * r)));
     f = 1. - smoothstep(0., .4 + .8 * pupil_var, r);
-    inner_col = mix(inner_col, vec3(.8, .9, .9), f);
+    inner_col = mix(inner_col, vec3(.6, .8, .6), f);
     f = smoothstep(.3, 1., fbm(vec2(20. * a, 6. * r)));
-    inner_col = mix(inner_col, vec3(.6,.8, 1.), f);
+    inner_col = mix(inner_col, vec3(.4,.6, 0.8), f);
 #endif
     float rim_var = fbm(3. * p); // inner and outer iris edge
     rim_var *= rim_var;
@@ -115,11 +104,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     col *= min(light_intensity + .7, 1.);
     
     // spot
-    f = smoothstep(.05, .25, fbm(20. * p));
-    col = mix(vec3(.2), col, f);
+    f = smoothstep(.05, .25, fbm((20. - 3. * pupil_var / (r * r))* p));
+    col = mix(vec3(.04), col, f);
     
-    // eyelash
-        
     // pupil
     rim_var = .7 * fbm(p);
     rim_var *= rim_var;
@@ -129,23 +116,19 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     if (r < eye_r) {
         vec3 N = normalize(vec3(p,sqrt(eye_r * eye_r - r * r)));
         vec3 R = normalize(reflect(rd, N));
-        f = dot(N, rd);
-        float fresnel = pow(1. - clamp(0., 1., f), 5.);
 
         vec3 spark = texture(iChannel0, R).rgb;
         spark = vec3(spark.r + spark.g + spark.b) * 0.3;
-        spark = pow(3. * spark, vec3(10.)) * .00005;
+        spark = pow(3. * spark, vec3(10.)) * .00002;
         col += clamp(spark, 0., 1.) * light_intensity;
     }
     
     // rim
     col = mix(col, vec3(0.), smoothstep(.65, .8, r));
     
-    
-    
     // bkg
-    vec3 bkg_col = mix(vec3(1.), vec3(.4), smoothstep(.8, 8., r));
+    vec3 bkg_col = mix(vec3(1.), vec3(.4), smoothstep(.2, 4., r));
     col = mix(col, bkg_col, smoothstep(.72, .8, r));
 
-    fragColor = vec4(col,1.);
+    fragColor = vec4(col, 1.);
 }
