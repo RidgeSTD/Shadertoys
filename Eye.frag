@@ -117,7 +117,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     float rim_var = fbm(3. * p); // inner and outer iris edge
     rim_var *= rim_var;
     col = mix( inner_col, outter_col, smoothstep(.4, .55, r + .1 * rim_var));
-    col *= min(light_intensity + .7, 1.);
+    col *= min(light_intensity + .3, 1.);
     
     // spot
     f = smoothstep(.05, .25, fbm((20. - 3. * pupil_var / (r * r))* p));
@@ -143,7 +143,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     col = mix(col, vec3(0.), smoothstep(.65, .8, r));
     
     // bkg
-    vec3 bkg_col = mix(vec3(1.), vec3(.4), smoothstep(.2, 4., r));
+    vec3 bkg_col = mix(vec3(1.), vec3(.4), smoothstep(.2, 4., r)) * light_intensity;
     col = mix(col, bkg_col, smoothstep(.72, .8, r));
 
     fragColor = vec4(col, 1.);
