@@ -9,20 +9,26 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     pos.x *= iResolution.x / iResolution.y;
     float r = length(pos);
 
-    // initial condition
-
     if (r < 0.03) {
-        fragColor = vec4(-0.1, 0.3, 0.2, 1);  // x, y, pressure, density
-    //if (sin(fragCoord.y / 2.) > 0.4 && uv.x < 0.005) {
-    //    fragColor = vec4(1,0,0.2, 1);
+        fragColor = vec4(0, 1, 0.2, 1);  // x, y, pressure, density
+        // if (sin(fragCoord.y / 2.) > 0.4 && uv.x < 0.005) {
+        //    fragColor = vec4(1,0,0.2, 1);
     } else {
-        if (iFrame < 4) {
-            fragColor = vec4(0, 0, 0, 0);
-        } else {
-            vec2 preUV = eulerInte(uv, uv);
-            vec4 newV = texture(iChannel0, preUV);  // TODO: bilerp
+        vec2 preUV = eulerInte(fragCoord, uv) / iResolution.xy;
+        preUV = clamp(preUV, 0., 1.);
+        vec4 newV = texture(iChannel0, preUV);  // TODO: bilerp
 
-            fragColor = newV;
-        }
+        // boundary condition
+#if 0
+        if (fragCoord.x < 2.) newV.xy = vec2(1, 0);
+        if (fragCoord.x > iResolution.x - 2.) newV.xy = vec2(-1, 0);
+        if (fragCoord.y < 2.) newV.xy = vec2(0, 1);
+        if (fragCoord.y > iResolution.y - 2.) newV.xy = vec2(0, -1);
+#else
+        if (fragCoord.x < 2. || fragCoord.x > iResolution.x - 2. || fragCoord.y < 2. ||
+            fragCoord.y > iResolution.y - 2.)
+            newV.xy = vec2(0);
+        fragColor = newV;
+#endif
     }
 }
