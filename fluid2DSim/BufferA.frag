@@ -20,8 +20,9 @@ vec2 Rk4Inte(vec2 p) {
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec2 uv = fragCoord / iResolution.xy;
     vec2 pos = uv * 2. - 1.;
-    pos.x *= iResolution.x / iResolution.y;
-    float r = length(pos);
+    float asp_ratio = iResolution.x / iResolution.y;
+    pos.x *= asp_ratio;
+    //float r = length(pos);
 
     
     vec2 preUV = eulerInte(fragCoord) / iResolution.xy;
@@ -29,11 +30,19 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     preUV = clamp(preUV, 0., 1.);
     vec4 newV = texture(iChannel0, preUV);  // TODO: bilerp
 
-    // initial condition
-    if (r < 0.03) {
+    // source
+    vec2 mouse;
+    if (length(iMouse.xy) < 0.01) {
+        mouse = vec2(0);
+    } else {
+        mouse = (iMouse.xy / iResolution.xy) * 2. - 1. ;
+    	mouse.x *= asp_ratio;
+    }
+    
+    if (length(pos - mouse) < .03) {
         newV.xy = vec2(0, 100);
         newV.w = 1.; // dye density
-    }	
+    }
 
     // boundary condition
     if (fragCoord.x < 2. || fragCoord.x > iResolution.x - 2. || fragCoord.y < 2. ||
