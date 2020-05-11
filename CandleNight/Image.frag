@@ -40,40 +40,44 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     //   / __/ /__ ___ _  ___
     //  / _// / _ `/  ' \/ -_)
     // /_/ /_/\_,_/_/_/_/\__/
-    float a2 = 0.01;
-    float b2 = 0.09;
-    float x2;
-    float y2;
+    float a2, b2, x2, y2, distortion;
     vec3 flameCol = vec3(0);
 
     // left petal
-    a2 = 0.01;
-    b2 = 0.25;
-    x2 = (pos.x - WICK_POS.x + 0.05) / (WICK_POS.y + 1. - pos.y) * .7;
-    x2 *= x2;
-    y2 = pos.y - WICK_POS.y;
-    y2 *= y2;
-    w = x2 / a2 + y2 / b2;
-    w = smoothstep(.8, .5, w);
-    w *= smoothstep(0.02, 0., pos.x - WICK_POS.x);
-    flameCol += vec3(w);
-	fragColor = vec4(w);
-    //return;
-    
-    // middle petal
     // a2 = 0.01;
+    // b2 = 0.25;
+    // x2 = (pos.x - WICK_POS.x + 0.05) / (WICK_POS.y + 1. - pos.y) * .7;
+    // x2 *= x2;
+    // y2 = pos.y - WICK_POS.y;
+    // y2 *= y2;
+    // w = x2 / a2 + y2 / b2;
+    // w = smoothstep(.8, .5, w);
+    // w *= smoothstep(0.02, 0., pos.x - WICK_POS.x);
+    // flameCol += vec3(w);
+
+    // middle petal
+    a2 = 0.01;
     b2 = 0.28;
-	x2 = (pos.x - WICK_POS.x) / (WICK_POS.y + 1. - pos.y) * .7;
+    x2 = (pos.x - 0.03 - WICK_POS.x) / (WICK_POS.y + 1.5 - pos.y) * .7;
     x2 *= x2;
-    y2 = pos.y - WICK_POS.y - 0.0;
+    y2 = pos.y - WICK_POS.y - .5;
     y2 *= y2;
-    w = x2 / a2 + y2 / b2;
-    w = smoothstep(.8, .5, w);
-    //w *= smoothstep(0.1, 0., abs(pos.x - WICK_POS.x));
-    flameCol += vec3(w);
-    fragColor = vec4(w);
-    fragColor = vec4(flameCol, 1.);
-    return;
+    distortion = x2 / a2 + y2 / b2;
+    w = smoothstep(.8, .6, distortion);
+    flameCol += w * FLAME_COL * (1. + 2.5 * smoothstep(.7, -.2, distortion));
+
+    // bottom black
+    a2 = 0.0004;
+    b2 = 0.04;
+    x2 = (pos.x - 0.03 - WICK_POS.x) / (WICK_POS.y + 1.5 - pos.y * 15.);
+    x2 *= x2;
+    y2 = pos.y - WICK_POS.y - 0.19;
+    y2 *= y2;
+    distortion = x2 / a2 + y2 / b2;
+    w = smoothstep(.6, -.2, distortion);
+    flameCol -= vec3(w) * 1.5;
+
+    color += SAT(flameCol);
 
     //    ____           __
     //   / __/_ _  ___  / /_____
