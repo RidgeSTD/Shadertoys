@@ -1,6 +1,6 @@
 #define N 21
 #define WICK_X 0.
-#define WICK_Y -0.5
+#define WICK_Y -0.6
 #define CANDLE_HALF_WIDTH 0.2
 #define FLAME_HEIGHT 0.5
 

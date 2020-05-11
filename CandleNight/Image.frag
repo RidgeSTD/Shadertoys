@@ -57,10 +57,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
     // middle petal
     a2 = 0.01;
-    b2 = 0.28;
-    x2 = (pos.x - 0.03 - WICK_POS.x) / (WICK_POS.y + 1.5 - pos.y) * .7;
+    b2 = 0.15;
+    x2 = (pos.x - 0.02 - WICK_POS.x) / (WICK_POS.y + 1.5 - pos.y) * .7;
     x2 *= x2;
-    y2 = pos.y - WICK_POS.y - .5;
+    y2 = pos.y - WICK_POS.y - .38;
     y2 *= y2;
     distortion = x2 / a2 + y2 / b2;
     w = smoothstep(.8, .6, distortion);
@@ -69,13 +69,13 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     // bottom black
     a2 = 0.0004;
     b2 = 0.04;
-    x2 = (pos.x - 0.03 - WICK_POS.x) / (WICK_POS.y + 1.5 - pos.y * 15.);
+    x2 = (pos.x - 0.02 - WICK_POS.x) / (WICK_POS.y + 1.5 - pos.y * 15.);
     x2 *= x2;
     y2 = pos.y - WICK_POS.y - 0.19;
     y2 *= y2;
     distortion = x2 / a2 + y2 / b2;
     w = smoothstep(.6, -.2, distortion);
-    flameCol -= vec3(w) * 1.5;
+    flameCol -= vec3(w) * 2.;
 
     color += SAT(flameCol);
 
