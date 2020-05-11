@@ -44,19 +44,35 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     float b2 = 0.09;
     float x2;
     float y2;
-    
-    
+    vec3 flameCol = vec3(0);
+
     // left petal
     a2 = 0.01;
     b2 = 0.25;
-    x2 = (pos.x - WICK_POS.x) / (WICK_POS.y + 1. - pos.y) * .7;
+    x2 = (pos.x - WICK_POS.x + 0.05) / (WICK_POS.y + 1. - pos.y) * .7;
     x2 *= x2;
     y2 = pos.y - WICK_POS.y;
     y2 *= y2;
     w = x2 / a2 + y2 / b2;
     w = smoothstep(.8, .5, w);
-    w *= smoothstep(0.05, 0., pos.x - WICK_POS.x);
+    w *= smoothstep(0.02, 0., pos.x - WICK_POS.x);
+    flameCol += vec3(w);
+	fragColor = vec4(w);
+    //return;
+    
+    // middle petal
+    // a2 = 0.01;
+    b2 = 0.28;
+	x2 = (pos.x - WICK_POS.x) / (WICK_POS.y + 1. - pos.y) * .7;
+    x2 *= x2;
+    y2 = pos.y - WICK_POS.y - 0.0;
+    y2 *= y2;
+    w = x2 / a2 + y2 / b2;
+    w = smoothstep(.8, .5, w);
+    //w *= smoothstep(0.1, 0., abs(pos.x - WICK_POS.x));
+    flameCol += vec3(w);
     fragColor = vec4(w);
+    fragColor = vec4(flameCol, 1.);
     return;
 
     //    ____           __
