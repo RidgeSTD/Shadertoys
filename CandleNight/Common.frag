@@ -1,12 +1,14 @@
 #define N 21
 #define WICK_X 0.
-#define WICK_Y -0.2
+#define WICK_Y -0.5
 #define CANDLE_HALF_WIDTH 0.2
-#define FLAME_COL vec3(.99, .6, .35)
+#define FLAME_HEIGHT 0.5
 
 #define SAT(x) clamp(x, 0., 1.)
 
-const vec2 WICK = vec2(0., -0.2);
+const vec2 WICK_POS = vec2(WICK_X, WICK_Y);
+const vec3 FLAME_COL = vec3(.99, .6, .35);
+const vec3 CANDLE_COL = vec3(0.92, 0.02, 0.21);
 
 float bilerp(float v11, float v12, float v21, float v22, float w1, float w2) {
     w1 = SAT(w1);
