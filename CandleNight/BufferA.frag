@@ -34,7 +34,15 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     preUV = SAT(preUV);
     vec4 newV = texture(iChannel0, preUV);
 
-    // source
+    
+    // boundary condition
+    if (fragCoord.x < 2. || fragCoord.x > iResolution.x - 2. || fragCoord.y < 2.)
+        newV.xy = vec2(0);
+    if (fragCoord.y > iResolution.y - 2.)
+        newV.xy = vec2(0, PUMP_SPEED); // pump air outof the scene
+    
+    // mouse interaction
+    // generate source
     vec2 mouse;
     if (length(iMouse.xy) < 0.01) {
         mouse = vec2(0);
@@ -42,19 +50,16 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         mouse = (iMouse.xy / iResolution.xy) * 2. - 1.;
         mouse.x *= asp_ratio;
     }
-
-    if (length(pos - mouse) < .03 && iMouse.z > 0.) {
-        newV.w = 1.;  // dye density
+    if (iMouse.z > .5) {
+        if (length(pos - mouse) < .03 && iMouse.z > 0.) {
+            newV.w = 1.;  // dye density
+        }
+        if (abs(pos.x - mouse.x) < 0.1 && abs(pos.y - mouse.y) < 0.03) {
+            newV.xy = vec2(0, PUMP_SPEED);
+        }
     }
-    if (abs(pos.x - mouse.x) < 0.1 && abs(pos.y - mouse.y) < 0.03) {
-        newV.xy = vec2(0, 100);
-    }
 
-    // boundary condition
-    if (fragCoord.x < 2. || fragCoord.x > iResolution.x - 2. || fragCoord.y < 2. || fragCoord.y > iResolution.y - 2.)
-        newV.xy = vec2(0);
-
-    // mouse interaction
+    // detect click
     if (iFrame < 1) {
         newV.z = 0.;
     }
