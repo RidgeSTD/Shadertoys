@@ -3,6 +3,7 @@
 #define WICK_Y -0.6
 #define CANDLE_HALF_WIDTH 0.2
 #define FLAME_HEIGHT 0.5
+#define CLICK_INTERVAL 1.
 
 #define SAT(x) clamp(x, 0., 1.)
 
