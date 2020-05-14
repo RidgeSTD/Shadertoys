@@ -34,13 +34,23 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     preUV = SAT(preUV);
     vec4 newV = texture(iChannel0, preUV);
 
-    
-    // boundary condition
-    if (fragCoord.x < 2. || fragCoord.x > iResolution.x - 2. || fragCoord.y < 2.)
+    // hot air and smoke
+    // reference: https://youtu.be/mLp_rSBzteI?t=40
+    // float hotAirSpeed = 150.;
+    // hotAirSpeed *= smoothstep(0.3, -4., abs(pos.x - WICK_POS.x))
+    //* smoothstep(0., 0.4, pos.y - WICK_POS.y);
+    if (length(pos - WICK_POS) < 0.05) {
+        // newV.xy = vec2(0, min(100. / iTime, 100.));
+        // newV.w = SAT(10. / iTime);
+        newV.xy = vec2(0, 100.);
+        newV.w = 1.;
+    }
+
+    close boundary condition, pure Neumann pressure boundary
+    if (fragCoord.x < 2. || fragCoord.x > iResolution.x - 2. || fragCoord.y < 2. || fragCoord.y > iResolution.y - 2.) {
         newV.xy = vec2(0);
-    if (fragCoord.y > iResolution.y - 2.)
-        newV.xy = vec2(0, PUMP_SPEED); // pump air outof the scene
-    
+    }
+
     // mouse interaction
     // generate source
     vec2 mouse;

@@ -1236,39 +1236,11 @@ void mainImage(out vec4 fragColor, in vec2 C) {
     vec2 uv = ((C - r * 0.5) / r.y);
     vec2 m = (iMouse.xy - r * 0.5) / r.y;
     float R = 0.07;
-    if (iMouse.z > 0.5 && length(uv - m) < R && texelFetch(iChannel3, ivec2(83, 0), 0).x > 0.5) {
-        // float d = sqrt(1.-dot(uv-m,uv-m)/R/R);
-        float d = 1. - sqrt(dot(uv - m, uv - m) / R / R);
-        p += texelFetch(iChannel3, ivec2(69, 0), 0).x > 0.5 ? -d : d;
-    }
+    // if (iMouse.z > 0.5 && length(uv - m) < R && texelFetch(iChannel3, ivec2(83, 0), 0).x > 0.5) {
+    //     // float d = sqrt(1.-dot(uv-m,uv-m)/R/R);
+    //     float d = 1. - sqrt(dot(uv - m, uv - m) / R / R);
+    //     p += texelFetch(iChannel3, ivec2(69, 0), 0).x > 0.5 ? -d : d;
+    // }
 
     fragColor = vec4(0, 0, p, 0);
 }
-
-// =====================================
-//    __  ___       ______        __
-//   /  |/  /_ __  /_  __/__ ___ / /_
-//  / /|_/ / // /   / / / -_|_-</ __/
-// /_/  /_/\_, /   /_/  \__/___/\__/
-//        /___/
-// =====================================
-
-// void jacobi(vec2 uv, float alpha, float rBeta) {
-//     vec4 xL = texture(iChannel0, uv - vec2(1, 0));
-//     vec4 xR = texture(iChannel0, uv + vec2(1, 0));
-//     vec4 xB = texture(iChannel0, uv - vec2(0, 1));
-//     vec4 xT = texture(iChannel0, uv + vec2(0, 1));
-
-//     vec4 bC = texture(iChannel0, uv);
-
-//     vec4 xNew = (xL + xR + xB + xT + alpha * bC) * rBeta;
-// }
-
-// void mainImage( out vec4 fragColor, in vec2 fragCoord )
-// {
-//     float alpha = (1. / iResolution.x);
-//     alpha *= alpha;
-//     float rBeta = 1. / (4. + alpha);
-
-//     fragColor = vec4(0.0,0.0,1.0,1.0);
-// }

@@ -1,4 +1,8 @@
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    // debug
+    fragColor = texture(iChannel1, fragCoord/iResolution.xy);
+    //return;
+    
     // buffer A stores the (vx, vy, var, d):
     //  - vx, vy: velocity in two directions
     //  - var: global variables accross frames
@@ -99,4 +103,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     // /_/  /_/\___/\_,_/___/\__/
 
     fragColor = vec4(color, 1.);
+    
+    // visualise velocity
+    // fragColor = vec4(texture(iChannel0, uv).xyz, 1);
 }
