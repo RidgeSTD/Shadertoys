@@ -3,10 +3,15 @@
 
 // buffer A stores the (vx, vy, var, d):
 //  - vx, vy: velocity in two directions
-//  - var: global variables accross frames
-//  - w: dye density
+//  - T: temperatore
+//  - w: smoke density
 
 #define h 2.
+#define AMBIENT_TEMP 26.
+#define WICK_TEMP 158.
+#define TEMP_DIFF 132.
+#define TEMP_DIFFUSE 0.99
+#define DENS_DIFFUSE 0.99
 
 vec2 eulerInte(vec2 p) {
     vec2 v = texture(iChannel0, p / iResolution.xy).xy;
@@ -34,23 +39,45 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     preUV = SAT(preUV);
     vec4 newV = texture(iChannel0, preUV);
 
+    // apply diffusion
+    newV.z *= TEMP_DIFFUSE;
+    newV.w *= DENS_DIFFUSE;
+
     // hot air and smoke
+    // reference: Fedkiw et al. 2001
     // reference: https://youtu.be/mLp_rSBzteI?t=40
-    // float hotAirSpeed = 150.;
-    // hotAirSpeed *= smoothstep(0.3, -4., abs(pos.x - WICK_POS.x))
-    //* smoothstep(0., 0.4, pos.y - WICK_POS.y);
+    // float wickTemperature = max(AMBIENT_TEMP, WICK_TEMP - iTime); // linear
+    float wickTemperature = WICK_TEMP - smoothstep(0., 30., iTime) * TEMP_DIFF; // Hermite interpolation
     if (length(pos - WICK_POS) < 0.05) {
-        // newV.xy = vec2(0, min(100. / iTime, 100.));
-        // newV.w = SAT(10. / iTime);
-        newV.xy = vec2(0, 100.);
+        // newV.xy = vec2(0, 500.);
+        newV.z = wickTemperature;
         newV.w = 1.;
     }
+    const float alpha = 0.2;
+    const float beta = 0.2;
+    vec2 forceBuoyancy = vec2(0, -alpha * newV.w + beta * max(0., newV.z - AMBIENT_TEMP));
+    newV.xy += forceBuoyancy;
 
-    close boundary condition, pure Neumann pressure boundary
+    // // open boundary condition
+    // if (fragCoord.x < 1.) {
+    //     newV.xy = texture(iChannel0, uv + vec2(1, 0) / iResolution.xy).xy;
+    // }
+    // if (fragCoord.x > iResolution.x - 2.) {
+    //     newV.xy = texture(iChannel0, uv - vec2(1, 0) / iResolution.xy).xy;
+    // }
+    // if (fragCoord.y < 1.) {
+    //     newV.xy = texture(iChannel0, uv + vec2(0, 1) / iResolution.xy).xy;
+    // }
+    // if (fragCoord.y > iResolution.y - 2.) {
+    //     newV.xy = texture(iChannel0, uv - vec2(0, 1) / iResolution.xy).xy;
+    // }
+
+    // close boundary condition, pure Neumann pressure boundary
     if (fragCoord.x < 2. || fragCoord.x > iResolution.x - 2. || fragCoord.y < 2. || fragCoord.y > iResolution.y - 2.) {
         newV.xy = vec2(0);
     }
 
+/*
     // mouse interaction
     // generate source
     vec2 mouse;
@@ -87,6 +114,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
             newV.z = iTime;
         }
     }
-
+*/
     fragColor = newV;
 }

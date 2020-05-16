@@ -1,3 +1,5 @@
+#define CANDLE_HALF_WIDTH 0.2
+
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     // debug
     fragColor = texture(iChannel1, fragCoord/iResolution.xy);
@@ -8,7 +10,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     //  - var: global variables accross frames
     //  - w: dye density
 
-    bool lit = texture(iChannel1, vec2(0)).z < 0.1;
+    bool lit = false;
+    
 
     // Normalized pixel coordinates (from 0 to 1)
     vec2 uv = fragCoord / iResolution.xy;
