@@ -13,32 +13,39 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec2 pos = (uv * 2. - 1.);
     pos.x *= asp_ratio;
 
-    vec3 color = vec3(0.04, 0.05, 0.10);
+    //    ___           __                              __
+    //   / _ )___ _____/ /_____ ________  __ _____  ___/ /
+    //  / _  / _ `/ __/  '_/ _ `/ __/ _ \/ // / _ \/ _  /
+    // /____/\_,_/\__/_/\_\\_, /_/  \___/\_,_/_//_/\_,_/
+    //                    /___/
+    vec4 bkg = vec4(0);
+
     //   _____             ____
     //  / ___/__ ____  ___/ / /__
     // / /__/ _ `/ _ \/ _  / / -_)
     // \___/\_,_/_//_/\_,_/_/\__/
+    vec4 color = vec4(0);
     float w = smoothstep(CANDLE_HALF_WIDTH, 0.18, abs(pos.x - WICK_POS.x));
     w = mix(w, 0., smoothstep(WICK_POS.y, WICK_POS.y + 0.01, pos.y));
-    color = mix(color, CANDLE_COL, w);
-    color *= 0.125;  // fake candle shadow
+    color = mix(color, vec4(CANDLE_COL, 1), w);
+    color.xyz *= 0.125;  // fake candle shadow
 
     // wick
     w = smoothstep(0.02, 0.01, abs(pos.x - WICK_POS.x - 1. + cos((pos.y - WICK_POS.y) * 2.)));
     w = mix(w, 0., step(WICK_LEN, abs(pos.y - WICK_POS.y - WICK_LEN)));
 
     vec3 wickColor = vec3(w);
-    color -= wickColor;
+    color.xyz -= wickColor;
+    color.a += w;
     color = SAT(color);
     vec3 wickHot = mix(FLAME_COL, vec3(0.), smoothstep(-0.1, 0.2, length(pos - (WICK_POS + vec2(0.05, 0.2)))));
     wickHot = mix(vec3(0), wickHot, w);
-    color += wickHot;
+    color.xyz += wickHot;
     color = SAT(color);
 
     // fake light
     vec2 wickTipPos = WICK_POS + vec2(0.035, WICK_LEN * 2.);
-    w = mix(smoothstep(0.15, 0.08, length(pos - wickTipPos)) * 8.,
-            smoothstep(0.5, 0., length(pos - wickTipPos)) * 8.,
+    w = mix(smoothstep(0.15, 0.08, length(pos - wickTipPos)) * 8., smoothstep(0.5, 0., length(pos - wickTipPos)) * 8.,
             lit);
     color *= w;
     color = SAT(color);
@@ -85,7 +92,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         w = smoothstep(.6, -.2, distortion);
         flameCol -= vec3(w) * 2.;
 
-        color += SAT(flameCol);
+        color.xyz += SAT(flameCol);
+        color.w += w;
     }
 
     //    ____           __
@@ -93,9 +101,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     //  _\ \/  ' \/ _ \/  '_/ -_)
     // /___/_/_/_/\___/_/\_\\__/
     // density
-    if (!lit) color.xyz += vec3(texture(iChannel0, uv).w);
+    if (!lit) color += vec4(texture(iChannel0, uv).w);
+    color = SAT(color);
 
-    fragColor = vec4(color, 1.);
+    fragColor = vec4(color);
 
     // visualise velocity
     // fragColor = vec4(texture(iChannel0, uv).xyz, 1);
