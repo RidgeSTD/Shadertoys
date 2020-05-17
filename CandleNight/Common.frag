@@ -2,21 +2,24 @@
 // we assume grid scale to be one
 #define HALF_RDX .5
 #define CLICK_INTERVAL 1.
+#define ANIM_DUR 10.
+#define LIT_DUR 3.
 
 // smoke behaviour
 #define AMBIENT_TEMP 26.
-#define WICK_TEMP 159.
+#define WICK_TEMP 300.
 #define TEMP_DIFFUSE 0.99
-#define DENS_DIFFUSE 0.98
+#define DENS_DIFFUSE 0.99
 #define VELO_DIFFUSE 0.99
 #define VISCOCITY 0.2
 #define SMOKE_GRAVITY_FACT 0.2
-#define SMOKE_TEMP_FACT 0.8
+#define SMOKE_TEMP_FACT 0.1
 
 // candle look
 #define WICK_X 0.
 #define WICK_Y -0.6
 #define CANDLE_HALF_WIDTH 0.2
+#define WICK_LEN 0.07
 
 #define SAT(x) clamp(x, 0., 1.)
 #define COOLING(x) exp(-pow(x, .3))

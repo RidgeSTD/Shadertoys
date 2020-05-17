@@ -4,7 +4,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     //  - t: temperature
     //  - d: smoke density
 
-    bool lit = false;
+    bool lit = mod(iTime, ANIM_DUR) < LIT_DUR;
+    bool litF = lit;
 
     // Normalized pixel coordinates (from 0 to 1)
     vec2 uv = fragCoord / iResolution.xy;
@@ -24,7 +25,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
     // wick
     w = smoothstep(0.02, 0.01, abs(pos.x - WICK_POS.x - 1. + cos((pos.y - WICK_POS.y) * 2.)));
-    w = mix(w, 0., step(0.07, abs(pos.y - WICK_POS.y - 0.075)));
+    w = mix(w, 0., step(WICK_LEN, abs(pos.y - WICK_POS.y - WICK_LEN)));
 
     vec3 wickColor = vec3(w);
     color -= wickColor;
@@ -35,11 +36,12 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     color = SAT(color);
 
     // fake light
-    if (lit) {
-        w = smoothstep(0.5, 0., length(pos - WICK_POS)) * 8.;
-        color *= w;
-        color = SAT(color);
-    }
+    vec2 wickTipPos = WICK_POS + vec2(0.035, WICK_LEN * 2.);
+    w = mix(smoothstep(0.15, 0.08, length(pos - wickTipPos)) * 8.,
+            smoothstep(0.5, 0., length(pos - wickTipPos)) * 8.,
+            lit);
+    color *= w;
+    color = SAT(color);
 
     //    ______
     //   / __/ /__ ___ _  ___
@@ -91,12 +93,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     //  _\ \/  ' \/ _ \/  '_/ -_)
     // /___/_/_/_/\___/_/\_\\__/
     // density
-    color.xyz += vec3(texture(iChannel0, uv).w);
-
-    //    __  ___
-    //   /  |/  /__  __ _____ ___
-    //  / /|_/ / _ \/ // (_-</ -_)
-    // /_/  /_/\___/\_,_/___/\__/
+    if (!lit) color.xyz += vec3(texture(iChannel0, uv).w);
 
     fragColor = vec4(color, 1.);
 
