@@ -26,7 +26,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     // \___/\_,_/_//_/\_,_/_/\__/
     vec4 color = vec4(0);
     float w = smoothstep(CANDLE_HALF_WIDTH, 0.18, abs(pos.x - WICK_POS.x));
-    w = mix(w, 0., smoothstep(WICK_POS.y, WICK_POS.y + 0.01, pos.y));
+    w = mix(w, 0., smoothstep(WICK_POS.y - 0.01, WICK_POS.y, pos.y));
     color = mix(color, vec4(CANDLE_COL, 1), w);
     color.xyz *= 0.125;  // fake candle shadow
 
@@ -80,6 +80,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         distortion = x2 / a2 + y2 / b2;
         w = smoothstep(.8, .6, distortion);
         flameCol += w * FLAME_COL * (1. + 2. * smoothstep(1.5, -2., distortion));
+        color.w += w;
 
         // bottom black
         a2 = 0.0004;
@@ -104,7 +105,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     if (!lit) color += vec4(texture(iChannel0, uv).w);
     color = SAT(color);
 
-    fragColor = vec4(color);
+    fragColor = vec4(mix(bkg.xyz, color.xyz, color.w), 1);
 
     // visualise velocity
     // fragColor = vec4(texture(iChannel0, uv).xyz, 1);
