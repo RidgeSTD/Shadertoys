@@ -140,7 +140,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     //  _\ \/  ' \/ _ \/  '_/ -_)
     // /___/_/_/_/\___/_/\_\\__/
     // density
-    color += mix(vec4(0), vec4(texture(iChannel0, uv).w), fLit);
+    color += mix(vec4(texture(iChannel0, uv).w), vec4(0), fLit);
     color = SAT(color);
 
     fragColor = vec4(mix(bkg.xyz, color.rgb, color.a), 1);
