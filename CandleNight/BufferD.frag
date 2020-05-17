@@ -1,14 +1,5 @@
 // gradient subtraction fragment program
 
-#ifndef VS_CODE
-#define VS_CODE
-#endif
-
-#ifdef VS_CODE
-// #iChannel0 "file://./BufferC.frag"
-// #iChannel1 "file://./BufferA.frag"
-#endif
-
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     const float halfrdx = 0.5;
     vec2 uv = fragCoord / iResolution.xy;

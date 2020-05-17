@@ -1,17 +1,15 @@
-#define CANDLE_HALF_WIDTH 0.2
-
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     // debug
-    fragColor = texture(iChannel1, fragCoord/iResolution.xy);
-    //return;
-    
+    fragColor = texture(iChannel1, fragCoord / iResolution.xy);
+    fragColor = vec4(texture(iChannel1, fragCoord / iResolution.xy).z, 0, 0, 1);
+    return;
+
     // buffer A stores the (vx, vy, var, d):
     //  - vx, vy: velocity in two directions
     //  - var: global variables accross frames
     //  - w: dye density
 
     bool lit = false;
-    
 
     // Normalized pixel coordinates (from 0 to 1)
     vec2 uv = fragCoord / iResolution.xy;
@@ -106,7 +104,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     // /_/  /_/\___/\_,_/___/\__/
 
     fragColor = vec4(color, 1.);
-    
+
     // visualise velocity
     // fragColor = vec4(texture(iChannel0, uv).xyz, 1);
 }

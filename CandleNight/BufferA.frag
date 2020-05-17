@@ -7,11 +7,6 @@
 //  - w: smoke density
 
 #define h 2.
-#define AMBIENT_TEMP 26.
-#define WICK_TEMP 158.
-#define TEMP_DIFF 132.
-#define TEMP_DIFFUSE 0.99
-#define DENS_DIFFUSE 0.99
 
 vec2 eulerInte(vec2 p) {
     vec2 v = texture(iChannel0, p / iResolution.xy).xy;
@@ -40,16 +35,13 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec4 newV = texture(iChannel0, preUV);
 
     // apply diffusion
-    newV.z *= TEMP_DIFFUSE;
-    newV.w *= DENS_DIFFUSE;
+    newV *= DIFFUSE_VEC;    
 
     // hot air and smoke
     // reference: Fedkiw et al. 2001
     // reference: https://youtu.be/mLp_rSBzteI?t=40
-    // float wickTemperature = max(AMBIENT_TEMP, WICK_TEMP - iTime); // linear
-    float wickTemperature = WICK_TEMP - smoothstep(0., 30., iTime) * TEMP_DIFF; // Hermite interpolation
+    float wickTemperature = AMBIENT_TEMP + TEMP_DIFF * COOLING(iTime);
     if (length(pos - WICK_POS) < 0.05) {
-        // newV.xy = vec2(0, 500.);
         newV.z = wickTemperature;
         newV.w = 1.;
     }
@@ -77,43 +69,43 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         newV.xy = vec2(0);
     }
 
-/*
-    // mouse interaction
-    // generate source
-    vec2 mouse;
-    if (length(iMouse.xy) < 0.01) {
-        mouse = vec2(0);
-    } else {
-        mouse = (iMouse.xy / iResolution.xy) * 2. - 1.;
-        mouse.x *= asp_ratio;
-    }
-    if (iMouse.z > .5) {
-        if (length(pos - mouse) < .03 && iMouse.z > 0.) {
-            newV.w = 1.;  // dye density
+    /*
+        // mouse interaction
+        // generate source
+        vec2 mouse;
+        if (length(iMouse.xy) < 0.01) {
+            mouse = vec2(0);
+        } else {
+            mouse = (iMouse.xy / iResolution.xy) * 2. - 1.;
+            mouse.x *= asp_ratio;
         }
-        if (abs(pos.x - mouse.x) < 0.1 && abs(pos.y - mouse.y) < 0.03) {
-            newV.xy = vec2(0, PUMP_SPEED);
+        if (iMouse.z > .5) {
+            if (length(pos - mouse) < .03 && iMouse.z > 0.) {
+                newV.w = 1.;  // dye density
+            }
+            if (abs(pos.x - mouse.x) < 0.1 && abs(pos.y - mouse.y) < 0.03) {
+                newV.xy = vec2(0, PUMP_SPEED);
+            }
         }
-    }
 
-    // detect click
-    if (iFrame < 1) {
-        newV.z = 0.;
-    }
-    ivec2 ifc = ivec2(fragCoord.xy);
-    if (ifc.x == 0 && ifc.y == 0) {
-        float lastClickTime = texelFetch(iChannel1, ivec2(0, 1), 0).z;
-        if (iMouse.z > 0.5 && iTime - lastClickTime > CLICK_INTERVAL) {
-            newV.z = 1. - newV.z;  // flip the lit condition
+        // detect click
+        if (iFrame < 1) {
+            newV.z = 0.;
         }
-    }
-    // filter redundant clicks with time interval of 0.3
-    if (ifc.x == 0 && ifc.y == 1) {
-        float lastClickTime = texelFetch(iChannel1, ifc, 0).z;
-        if (iMouse.z > .5 && iTime - lastClickTime > CLICK_INTERVAL) {
-            newV.z = iTime;
+        ivec2 ifc = ivec2(fragCoord.xy);
+        if (ifc.x == 0 && ifc.y == 0) {
+            float lastClickTime = texelFetch(iChannel1, ivec2(0, 1), 0).z;
+            if (iMouse.z > 0.5 && iTime - lastClickTime > CLICK_INTERVAL) {
+                newV.z = 1. - newV.z;  // flip the lit condition
+            }
         }
-    }
-*/
+        // filter redundant clicks with time interval of 0.3
+        if (ifc.x == 0 && ifc.y == 1) {
+            float lastClickTime = texelFetch(iChannel1, ifc, 0).z;
+            if (iMouse.z > .5 && iTime - lastClickTime > CLICK_INTERVAL) {
+                newV.z = iTime;
+            }
+        }
+    */
     fragColor = newV;
 }
