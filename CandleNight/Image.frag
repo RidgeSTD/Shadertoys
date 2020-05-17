@@ -1,3 +1,22 @@
+// The MIT License
+// Copyright © 2020 Ridge/winlandiano
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+// documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright
+// notice and this permission notice shall be included in all copies or substantial portions of the Software. THE
+// SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// Smoke simulation with navier-stokes fluid dynamics. Buoyancy refers to Fedkiw et al. 2001. Hope to create a feel of a jazz bar but still short of:
+// 1. flame animation
+// 2. 3D volumetric
+// 3. Wax (pseudo)subsurface scattering
+// Thanks to trirop for the great single step jacobi-resolver!
+// Refer to GPU Gems chap. 38: Fast Fluid Dynamics Simulation on the GPU to more detail.
+
 void bgCandle(inout vec4 col, vec2 pos, vec2 bgXY, float r, float intensity) {
     float w = smoothstep(r, r - 0.02, length(pos - bgXY)) * 0.7 * blink(iTime * 2. + hash2(bgXY));
     col.xyz = mix(col.xyz, SAT(BG_COL * intensity), w);
@@ -11,8 +30,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     //  - d: smoke density
 
     bool lit = mod(iTime, ANIM_DUR) < LIT_DUR;
-    float fLit = float(lit);
-
+	float fLit = float(lit);
+    
     // Normalized pixel coordinates (from 0 to 1)
     vec2 uv = fragCoord / iResolution.xy;
     float asp_ratio = iResolution.x / iResolution.y;
