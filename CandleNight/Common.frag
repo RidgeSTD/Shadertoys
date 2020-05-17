@@ -1,6 +1,6 @@
 #define N 21
-#define WICK_X 0.
-#define WICK_Y -0.6
+// we assume grid scale to be one
+#define HALF_RDX .5
 #define CLICK_INTERVAL 1.
 
 // smoke behaviour
@@ -9,8 +9,11 @@
 #define TEMP_DIFFUSE 0.99
 #define DENS_DIFFUSE 0.98
 #define VELO_DIFFUSE 0.99
+#define VISCOCITY 0.2
 
 // candle look
+#define WICK_X 0.
+#define WICK_Y -0.6
 #define CANDLE_HALF_WIDTH 0.2
 
 #define SAT(x) clamp(x, 0., 1.)
@@ -38,4 +41,13 @@ vec3 bilerp(vec3 v11, vec3 v12, vec3 v21, vec3 v22, vec3 w1, vec3 w2) {
     w1 = SAT(w1);
     w2 = SAT(w2);
     return mix(mix(v11, v12, w2), mix(v21, v22, w2), w1);
+}
+
+vec2 xyGrad(sampler2D s, vec2 coord, vec2 resXY) {
+    float vL = texture(s, (coord - vec2(1, 0)) / resXY).x;
+    float vR = texture(s, (coord + vec2(1, 0)) / resXY).x;
+    float vB = texture(s, (coord - vec2(0, 1)) / resXY).y;
+    float vT = texture(s, (coord + vec2(0, 1)) / resXY).y;
+
+    return HALF_RDX * vec2(vR - vL, vT - vB);
 }

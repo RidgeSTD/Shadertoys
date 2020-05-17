@@ -1236,11 +1236,6 @@ void mainImage(out vec4 fragColor, in vec2 C) {
     vec2 uv = ((C - r * 0.5) / r.y);
     vec2 m = (iMouse.xy - r * 0.5) / r.y;
     float R = 0.07;
-    // if (iMouse.z > 0.5 && length(uv - m) < R && texelFetch(iChannel3, ivec2(83, 0), 0).x > 0.5) {
-    //     // float d = sqrt(1.-dot(uv-m,uv-m)/R/R);
-    //     float d = 1. - sqrt(dot(uv - m, uv - m) / R / R);
-    //     p += texelFetch(iChannel3, ivec2(69, 0), 0).x > 0.5 ? -d : d;
-    // }
 
     fragColor = vec4(0, 0, p, 0);
 }

@@ -50,25 +50,23 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec2 forceBuoyancy = vec2(0, -alpha * newV.w + beta * max(0., newV.z - AMBIENT_TEMP));
     newV.xy += forceBuoyancy;
 
-    // // open boundary condition
-    // if (fragCoord.x < 1.) {
-    //     newV.xy = texture(iChannel0, uv + vec2(1, 0) / iResolution.xy).xy;
-    // }
-    // if (fragCoord.x > iResolution.x - 2.) {
-    //     newV.xy = texture(iChannel0, uv - vec2(1, 0) / iResolution.xy).xy;
-    // }
-    // if (fragCoord.y < 1.) {
-    //     newV.xy = texture(iChannel0, uv + vec2(0, 1) / iResolution.xy).xy;
-    // }
-    // if (fragCoord.y > iResolution.y - 2.) {
-    //     newV.xy = texture(iChannel0, uv - vec2(0, 1) / iResolution.xy).xy;
-    // }
+    // viscosity term
+    vec2 gL = xyGrad(iChannel0, fragCoord - vec2(1, 0), iResolution.xy);
+    vec2 gR = xyGrad(iChannel0, fragCoord + vec2(1, 0), iResolution.xy);
+    vec2 gB = xyGrad(iChannel0, fragCoord - vec2(0, 1), iResolution.xy);
+    vec2 gT = xyGrad(iChannel0, fragCoord + vec2(0, 1), iResolution.xy);
+    float lapU = (gR - gL + gT - gB) * HALF_RDX;
+    newV.xy += VISCOCITY * lapU * iTimeDelta;
 
     // close boundary condition, pure Neumann pressure boundary
     if (fragCoord.x < 2. || fragCoord.x > iResolution.x - 2. || fragCoord.y < 2. || fragCoord.y > iResolution.y - 2.) {
         newV.xy = vec2(0);
     }
 
+    //    __  ___
+    //   /  |/  /__  __ _____ ___
+    //  / /|_/ / _ \/ // (_-</ -_)
+    // /_/  /_/\___/\_,_/___/\__/
     /*
         // mouse interaction
         // generate source
