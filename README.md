@@ -2,7 +2,14 @@
 
 A repository where some gizmos about CG are stored. [Shadertoy](https://www.shadertoy.com/) is a platform providing WebGL programming and demonstrating functions. This repo is still in update.
 
-## Currently released shaders:
+## Currently released shaders (click on pictures to visit live code):
+
+### Candle Night (2020-05-17)
+
+An applycation of fluid dynamics using navier-stokes. Read the introduction of [GPU Gem Chap. 8](https://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch38.html) and adjusted according to Shaderstory. Shaderstory has the limitation of only single fragment-shader call between two frames. A brilliant solution is provided by [trirop](https://www.shadertoy.com/user/trirop) that a pre-calculated weight kernel is used to fake the Jacobi iteration. In Buffer A the smoke flows up according to its temporature and sinks according to its density. The cooling function is pseudo-exponential, after several heuristic tries.
+
+[<img src="https://github.com/RidgeSTD/Shadertoys/blob/develope/demo/gifs/Candle_night.gif?raw=true" style="width:640px;height:360px;">](https://www.shadertoy.com/view/3dsBWj)
+<!-- <iframe width="640" height="360" frameborder="0" src="https://www.shadertoy.com/embed/3dsBWj?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe> -->
 
 ### Eye/pupil reaction (2020-04-10)
 
