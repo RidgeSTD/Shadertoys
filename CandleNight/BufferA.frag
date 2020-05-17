@@ -1,10 +1,10 @@
 // Advection fragment program
 // q(x, t + ∂t) = q(x - u(x, t)∂t, t)
 
-// buffer A stores the (vx, vy, var, d):
+// buffer A stores the (vx, vy, T, d):
 //  - vx, vy: velocity in two directions
 //  - T: temperatore
-//  - w: smoke density
+//  - d: smoke density
 
 #define h 2.
 
@@ -40,14 +40,12 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     // hot air and smoke
     // reference: Fedkiw et al. 2001
     // reference: https://youtu.be/mLp_rSBzteI?t=40
-    float wickTemperature = AMBIENT_TEMP + TEMP_DIFF * COOLING(iTime);
     if (length(pos - WICK_POS) < 0.05) {
+        float wickTemperature = AMBIENT_TEMP + TEMP_DIFF * COOLING(iTime);
         newV.z = wickTemperature;
         newV.w = 1.;
     }
-    const float alpha = 0.2;
-    const float beta = 0.2;
-    vec2 forceBuoyancy = vec2(0, -alpha * newV.w + beta * max(0., newV.z - AMBIENT_TEMP));
+    vec2 forceBuoyancy = vec2(0, -SMOKE_GRAVITY_FACT * newV.w + SMOKE_TEMP_FACT * max(0., newV.z - AMBIENT_TEMP));
     newV.xy += forceBuoyancy;
 
     // viscosity term

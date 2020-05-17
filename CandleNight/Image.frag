@@ -1,13 +1,8 @@
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-    // debug
-    // fragColor = texture(iChannel1, fragCoord / iResolution.xy);
-    // fragColor = vec4(texture(iChannel1, fragCoord / iResolution.xy).z, 0, 0, 1);
-    // return;
-
-    // buffer A stores the (vx, vy, var, d):
+    // buffer A/D stores the (vx, vy, t, d):
     //  - vx, vy: velocity in two directions
-    //  - var: global variables accross frames
-    //  - w: dye density
+    //  - t: temperature
+    //  - d: smoke density
 
     bool lit = false;
 

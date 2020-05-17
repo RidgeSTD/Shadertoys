@@ -10,6 +10,8 @@
 #define DENS_DIFFUSE 0.98
 #define VELO_DIFFUSE 0.99
 #define VISCOCITY 0.2
+#define SMOKE_GRAVITY_FACT 0.2
+#define SMOKE_TEMP_FACT 0.8
 
 // candle look
 #define WICK_X 0.
