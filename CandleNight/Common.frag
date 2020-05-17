@@ -13,7 +13,7 @@
 #define VELO_DIFFUSE 0.99
 #define VISCOCITY 0.2
 #define SMOKE_GRAVITY_FACT 0.2
-#define SMOKE_TEMP_FACT 0.1
+#define SMOKE_TEMP_FACT 0.3
 
 // candle look
 #define WICK_X 0.
@@ -27,6 +27,7 @@
 const vec2 WICK_POS = vec2(WICK_X, WICK_Y);
 const vec3 FLAME_COL = vec3(.99, .6, .35);
 const vec3 CANDLE_COL = vec3(0.92, 0.02, 0.21);
+const vec3 BG_COL = vec3(.99, .6, .35);
 const vec4 DIFFUSE_VEC = vec4(VELO_DIFFUSE, VELO_DIFFUSE, TEMP_DIFFUSE, DENS_DIFFUSE);
 const float TEMP_DIFF = WICK_TEMP - AMBIENT_TEMP;
 
@@ -55,4 +56,13 @@ vec2 xyGrad(sampler2D s, vec2 coord, vec2 resXY) {
     float vT = texture(s, (coord + vec2(0, 1)) / resXY).y;
 
     return HALF_RDX * vec2(vR - vL, vT - vB);
+}
+
+float hash2(vec2 p) {
+    p = 50.0 * fract(p * 0.3183099 + vec2(0.71, 0.113));
+    return -1.0 + 2.0 * fract(p.x * p.y * (p.x + p.y));
+}
+
+float blink(float t) {
+    return 1. - pow(2. + sin(t), -5.);
 }
