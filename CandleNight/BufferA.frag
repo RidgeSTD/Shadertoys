@@ -35,7 +35,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec4 newV = texture(iChannel0, preUV);
 
     // apply diffusion
-    newV *= DIFFUSE_VEC;    
+    newV *= DIFFUSE_VEC;
 
     // hot air and smoke
     // reference: Fedkiw et al. 2001
@@ -55,7 +55,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec2 gR = xyGrad(iChannel0, fragCoord + vec2(1, 0), iResolution.xy);
     vec2 gB = xyGrad(iChannel0, fragCoord - vec2(0, 1), iResolution.xy);
     vec2 gT = xyGrad(iChannel0, fragCoord + vec2(0, 1), iResolution.xy);
-    float lapU = (gR - gL + gT - gB) * HALF_RDX;
+    vec2 lapU = (gR - gL + gT - gB) * HALF_RDX;
     newV.xy += VISCOCITY * lapU * iTimeDelta;
 
     // close boundary condition, pure Neumann pressure boundary
