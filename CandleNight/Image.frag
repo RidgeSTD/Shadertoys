@@ -10,7 +10,8 @@
 // COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-// Smoke simulation with navier-stokes fluid dynamics. Buoyancy refers to Fedkiw et al. 2001. Hope to create a feel of a jazz bar but still short of:
+// Smoke simulation with navier-stokes fluid dynamics. Buoyancy refers to Fedkiw et al. 2001. Hope to create a feel of a
+// jazz bar but still short of:
 // 1. flame animation
 // 2. 3D volumetric
 // 3. Wax (pseudo)subsurface scattering
@@ -24,7 +25,17 @@ void bgCandle(inout vec4 col, vec2 pos, vec2 bgXY, float r, float intensity) {
 }
 
 vec2 flameFlicker(vec2 pos) {
-    return pos + vec2(sin(iTime) * 0.2 * SAT(pos.y - WICK_POS.y), 0);
+    vec2 res = pos;
+    float t = iTime;
+    float w = smoothstep(.2, -.2, abs(sin(t))) * .3;
+    w += smoothstep(.2, -.2, abs(sin(t + 1.))) * -0.2;
+    w += sin(t) * .1;
+    w += sin(2. * t) * .05;
+    w += sin(4. * t) * .024;
+    res += vec2(w * SAT(pos.y - WICK_POS.y), 0);
+    w = smoothstep(0.7, -0.7, abs(sin(t))) * 0.2;
+    res += vec2(0, SAT(pos.y - WICK_POS.y) * w);
+    return res;
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
@@ -34,8 +45,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     //  - d: smoke density
 
     bool lit = mod(iTime, ANIM_DUR) < LIT_DUR;
-	float fLit = float(lit);
-    
+    float fLit = float(lit);
+
     // Normalized pixel coordinates (from 0 to 1)
     vec2 uv = fragCoord / iResolution.xy;
     float asp_ratio = iResolution.x / iResolution.y;
