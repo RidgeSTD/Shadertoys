@@ -4,6 +4,15 @@ A repository where some gizmos about CG are stored. [Shadertoy](https://www.shad
 
 ## Currently released shaders (click on pictures to visit live code):
 
+### Welcome home, spacemen! (2020-06-03)
+
+A further development based on nimitz's "Re-entry". First time modelling on space to combine primitives with math in ray-marching. Additional cinematic camera behaviour when using telescope and create a tense atmosphere. The flame is created by combining FBMs of different frequencies. Also multiple pass ray-marching create a dramatic volumetric shading.
+
+[<img src="https://github.com/RidgeSTD/Shadertoys/blob/develope/demo/gifs/Welcomehome_Spacemen.gif?raw=true" style="width:640px;height:360px;">](https://www.shadertoy.com/view/wsBfW3)
+<!-- <iframe width="640" height="360" frameborder="0" src="https://www.shadertoy.com/embed/wsBfW3?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe> -->
+
+
+
 ### Candle Night (2020-05-17)
 
 An applycation of fluid dynamics using navier-stokes. Read the introduction of [GPU Gem Chap. 8](https://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch38.html) and adjusted according to Shaderstory. Shaderstory has the limitation of only single fragment-shader call between two frames. A brilliant solution is provided by [trirop](https://www.shadertoy.com/user/trirop) that a pre-calculated weight kernel is used to fake the Jacobi iteration. In Buffer A the smoke flows up according to its temporature and sinks according to its density. The cooling function is pseudo-exponential, after several heuristic tries.
