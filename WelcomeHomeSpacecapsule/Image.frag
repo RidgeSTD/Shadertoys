@@ -1,7 +1,7 @@
-// Re-entry by nimitz (twitter: @stormoid)
+// Welcome Home, spacemen! by Ridge/winlandiano
+// based on "Re-entry" by nimitz (twitter: @stormoid)
 // https://www.shadertoy.com/view/4dGyRh
 // License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License
-// Contact the author for other licensing options
 
 #define ITR 35
 #define FAR 15.
@@ -265,10 +265,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     float w;
     t = 8. * time;
     w = noise2(vec2(0, t));
-    rd.yz *= rot(w * 0.05);
+    rd.yz *= rot(w * 0.02);
     t = 12. * time;
     w = noise2(vec2(0.5, t));
-    rd.xz *= rot(w * 0.05);
+    rd.xz *= rot(w * 0.02);
 
     float rz = march(ro, rd);  // march geometry
     vec3 col = stars(rd);
