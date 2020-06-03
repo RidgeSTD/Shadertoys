@@ -263,15 +263,16 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     // shake camera as in telescope
     float t;
     float w;
-    t = 4. * time;
+    t = 8. * time;
     w = noise2(vec2(0, t));
-    ro.x += w * 0.2;
+    rd.yz *= rot(w * 0.05);
     t = 12. * time;
     w = noise2(vec2(0.5, t));
-    ro.y += w * 0.3;
+    rd.xz *= rot(w * 0.05);
 
     float rz = march(ro, rd);  // march geometry
     vec3 col = stars(rd);
+
     float maxT = rz;
     if (rz > FAR) maxT = 25.;
     vec3 mv = marchVol(ro, rd, roz - 1.5, maxT);
