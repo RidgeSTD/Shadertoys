@@ -8,7 +8,7 @@ A repository where some gizmos about CG are stored. [Shadertoy](https://www.shad
 
 A further development based on nimitz's "Re-entry". First time modelling on space to combine primitives with math in ray-marching. Additional cinematic camera behaviour when using telescope and create a tense atmosphere. The flame is created by combining FBMs of different frequencies. Also multiple pass ray-marching create a dramatic volumetric shading.
 
-[<img src="https://github.com/RidgeSTD/Shadertoys/blob/develope/demo/gifs/Welcomehome_Spacemen.gif?raw=true" style="width:640px;height:360px;">](https://www.shadertoy.com/view/wsBfW3)
+[<img src="https://github.com/RidgeSTD/Shadertoys/blob/master/demo/gifs/Welcomehome_Spacemen.gif?raw=true" style="width:640px;height:360px;">](https://www.shadertoy.com/view/wsBfW3)
 <!-- <iframe width="640" height="360" frameborder="0" src="https://www.shadertoy.com/embed/wsBfW3?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe> -->
 
 
