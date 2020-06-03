@@ -6,7 +6,6 @@
 #define ITR 35
 #define FAR 15.
 #define time iTime
-#define rez iResolution
 
 mat2 mm2(in float a) {
     float c = cos(a), s = sin(a);
@@ -14,22 +13,52 @@ mat2 mm2(in float a) {
 }
 
 vec3 objmov(vec3 p) {
-    vec2 mxy = iMouse.xy / rez.xy;
-    mxy.x *= rez.x / rez.y;
-    mxy *= 2.;
-    // return (p - vec3(mxy, -.2));
-    // p.xz *= mm2(-time * 3.4 + sin(time * 1.11));
-    // p.yz *= mm2(time * 2.7 + cos(time * 2.5));
-    float t = 4. * time;
-    float w = sin(t) + 0.5 * sin(2. * t) + 0.25 * sin(4. * t);
-    p.x += w * 0.1;
-    t = 2. * time;
-    w = sin(t) + 0.5 * sin(2. * t) + 0.25 * sin(4. * t);
-    p.y += w * 0.2;
+    p.xy *= rot(sin(time * 4.) / (1. + time));
     return p;
 }
 
-float mapObj(vec3 p) { return 0.; }
+float sdObj(vec3 p) {
+    float rT = 0.75, rB = 1., h = 0.5;
+    vec3 pos = vec3(0, 0, 0);
+    float rT2 = rT * rT;
+    float d;
+
+    float topRatio = 2.;
+    float botRatio = 4.;
+    float dcc = sdCappedCone(p - pos, h, rB, rT);
+
+    // top sphere
+    float rsTop = topRatio * h;
+    float rsTop2 = rsTop * rsTop;
+    vec3 sTopPos = vec3(pos.x, pos.y + h - sqrt(rsTop2 - rT2), pos.z);
+    float dsTop = sdSphere(p - sTopPos, rsTop);
+    dsTop = max(dsTop, -p.y + pos.y + h - eps);
+    d = min(dcc, dsTop);
+
+    // top exit
+    float rC = 1.1 * h;
+    float hC = rsTop - sqrt(rsTop2 - rC * rC);
+    vec3 cPos = sTopPos + vec3(0, rsTop, 0);
+    float dcTop = sdCylinder(p - cPos, vec3(0, -hC, 0), vec3(0, hC * .1, 0), rC);
+    d = min(d, dcTop);
+
+    // sind window
+    rC = 0.4 * h;
+    hC = 0.05 * h;
+    cPos = pos + vec3(0, 0, (rB - rT) / 2.);
+    cPos = pos + vec3(0, 0, rT + (rB - rT) / 2.);
+    float k = (rB - rT) / h;
+    float dWindow = sdCylinder(p - cPos, vec3(0, -hC * k, -hC / k), vec3(0, hC * k, hC / k), rC);
+    d = min(d, dWindow);
+
+    // bottom sphere
+    float rsBot = botRatio * h;
+    float dsBot = sdSphere(p - vec3(pos.x, pos.y - h + sqrt(rsBot * rsBot - rB * rB), pos.z), rsBot);
+    dsBot = max(dsBot, p.y - pos.y + h - eps);
+    d = min(d, dsBot);
+
+    return d;
+}
 
 float tri(in float x) { return abs(fract(x) - 0.5) - .25; }
 float trids(in vec3 p) { return max(tri(p.z), min(tri(p.x), tri(p.y))); }
@@ -58,8 +87,10 @@ float triNoise3d(in vec3 p, in float spd) {
 float map(vec3 p) {
     p *= 1.5;
     p = objmov(p);
-    float d = length(p) - 1.;
-    // d -= trids(p * 1.2) * .7;
+    p.xy *= rot(PI);
+    p.xz *= rot(PI / 2.);
+    p.y += 1.5;
+    float d = sdObj(p - vec3(0, 1.2, 0));
     return d / 1.5;
 }
 
@@ -75,7 +106,8 @@ float march(in vec3 ro, in vec3 rd) {
     for (int i = 0; i < ITR; i++) {
         if (abs(h) < precis || d > FAR) break;
         d += h;
-        h = map(ro + rd * d);
+        float res = map(ro + rd * d);
+        h = res;
     }
     return d;
 }
@@ -215,7 +247,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     p.x *= iResolution.x / iResolution.y;
     vec2 mo = iMouse.xy / iResolution.xy - .5;
     mo = vec2(-0.27, 0.31);
-    mo = vec2(0, 0);
     mo.x *= iResolution.x / iResolution.y;
     const float roz = 7.3;
     vec3 ro = vec3(-1.5, 0.5, roz);
@@ -229,6 +260,16 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     ro.xy *= my;
     rd.xy *= my;
 
+    // shake camera as in telescope
+    float t;
+    float w;
+    t = 4. * time;
+    w = noise2(vec2(0, t));
+    ro.x += w * 0.2;
+    t = 12. * time;
+    w = noise2(vec2(0.5, t));
+    ro.y += w * 0.3;
+
     float rz = march(ro, rd);  // march geometry
     vec3 col = stars(rd);
     float maxT = rz;
@@ -241,7 +282,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         float crv = clamp(curv(pos, 0.3) * 0.35, 0., 1.3);
 
         vec3 col2 = vec3(1, 0.1, 0.02) * (crv * 0.8 + 0.2) * 0.5;
-        // firct 控制物体的发热而发光的效果
         float frict = dot(pos, normalize(vec3(0., 1., 0.)));
         col = col2 * (frict * 0.3 + 0.7);
 
@@ -254,7 +294,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         col = pow(col, vec3(1.5, 1.2, 1.2)) * .9;
     }
     col += mv;
-    col += marchVol2(ro, rd, roz - 5.5, rz);  // 加入一些高亮度的火苗
+    col += marchVol2(ro, rd, roz - 5.5, rz);
     col = pow(col, vec3(1.4)) * 1.1;
 
     fragColor = vec4(col, 1.0);

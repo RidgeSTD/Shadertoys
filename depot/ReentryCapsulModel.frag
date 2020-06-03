@@ -117,8 +117,6 @@ float GetDist(vec3 p) {
     dsBot = max(dsBot, p.y - pos.y + h);
     d = min(d, dsBot);
 
-    // d = dWindow;
-
     return d;
 }
 

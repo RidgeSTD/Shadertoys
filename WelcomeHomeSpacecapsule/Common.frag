@@ -1,3 +1,6 @@
+#define PI 3.141592653589793238
+#define eps 1e-5
+
 // @iq MIT License https://www.shadertoy.com/view/Xds3zN
 
 float dot2(in vec2 v) { return dot(v, v); }
@@ -44,9 +47,34 @@ float sdCappedCone(in vec3 p, in float h, in float r1, in float r2) {
 
 float sdSphere(vec3 p, float r) { return length(p) - r; }
 
-mat2 rot(float a) {
-    float c = cos(a);
-    float s = sin(a);
+mat2 rot(float r) {
+    float c = cos(r);
+    float s = sin(r);
     return mat2(c, -s, s, c);
-                  
+}
+
+float hash2(vec2 p) {
+    p = 50.0 * fract(p * 0.3183099 + vec2(0.71, 0.113));
+    return -1.0 + 2.0 * fract(p.x * p.y * (p.x + p.y));
+}
+
+float hash3(vec3 p) {
+    p = fract(p * 0.3183099 + .1);
+    p *= 17.0;
+    return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
+float noise2(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+
+    // Four corners in 2D of a tile
+    float a = hash2(i);
+    float b = hash2(i + vec2(1.0, 0.0));
+    float c = hash2(i + vec2(0.0, 1.0));
+    float d = hash2(i + vec2(1.0, 1.0));
+
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
