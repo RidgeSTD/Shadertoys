@@ -168,7 +168,9 @@ vec3 Lambertian(Intersection i, LightSource light) {
     } else {
         L = -normalize(light.position);
     }
-    return i.baseColor.xyz * i.roughness * light.color * intensity * saturate(dot(i.N, L));
+    vec3 col = pow(i.baseColor.xyz, vec3(2.2));  // gamma correction to linear
+
+    return col * i.roughness * light.color * intensity * saturate(dot(i.N, L));
            // + AMBIENT_WEIGHT * texture(iChannel2, i.N).xyz;
 }
 
@@ -230,9 +232,12 @@ vec3 GGX(Intersection i, LightSource light) {
 
     vec3 HEnv = normalize(i.N + i.V);
     float FEnv = F_Schlick(i.N, HEnv, i.metallic);
-    return diffuseLightColor
-        + texture(iChannel0, i.N).xyz * FEnv * AMBIENT_WEIGHT// * max(0., dot(i.N, L))
-        + light.color * intensity * ggx;
+
+    vec3 ggxColor = diffuseLightColor
+                    + texture(iChannel0, i.N).xyz * FEnv * AMBIENT_WEIGHT// * max(0., dot(i.N, L))
+                    + light.color * intensity * ggx;
+    ggxColor = pow(ggxColor, vec3(.4545)); // back to gamma
+    return ggxColor;
 }
 
 // ----------------  shading technics ends  ----------------
