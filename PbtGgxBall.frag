@@ -16,9 +16,20 @@
 // Visibility/geometry term: Smith shadow-masking
 // Distribution term: Trowbridge-Reitz
 
+
+// ----------------  optional function macros  ----------------
+#define GAMMA_CORRECTION
+#define CAMERA_ANIMATION
+#define LIGHT_ANIMATION
+// ----------------  optional function ends  ----------------
+
 #define SPHERE_N 1
 #define LIGHT_N 2
-#define AMBIENT_WEIGHT 0.3
+#ifdef GAMMA_CORRECTION
+    #define AMBIENT_WEIGHT 0.02
+#else
+    #define AMBIENT_WEIGHT 0.3
+#endif
 #define SPEED 0.5
 
 #define SPHERE_TYPE 1
@@ -26,16 +37,13 @@
 #define DIRECTIONAL_LIGHT_TYPE 51
 #define POINT_LIGHT_TYPE 52
 
-#define INF 10000000000.0f
+#define INF 1e10
 #define PI 3.141592653589793
 #define TWOPI 6.283185307179586
 
 #define saturate(x) clamp(x, 0., 1.)
 
-// ----------------  optional function macros  ----------------
-#define CAMERA_ANIMATION
-#define LIGHT_ANIMATION
-// ----------------  optional function ends  ----------------
+
 
 struct Ray {
     vec3 origin;
@@ -168,7 +176,10 @@ vec3 Lambertian(Intersection i, LightSource light) {
     } else {
         L = -normalize(light.position);
     }
-    vec3 col = pow(i.baseColor.xyz, vec3(2.2));  // gamma correction to linear
+    vec3 col = i.baseColor.xyz;
+    #ifdef GAMMA_CORRECTION
+    col = pow(col, vec3(2.2));  // gamma correction to linear
+    #endif
 
     return col * i.roughness * light.color * intensity * saturate(dot(i.N, L));
            // + AMBIENT_WEIGHT * texture(iChannel2, i.N).xyz;
@@ -236,7 +247,9 @@ vec3 GGX(Intersection i, LightSource light) {
     vec3 ggxColor = diffuseLightColor
                     + texture(iChannel0, i.N).xyz * FEnv * AMBIENT_WEIGHT// * max(0., dot(i.N, L))
                     + light.color * intensity * ggx;
+    #ifdef GAMMA_CORRECTION
     ggxColor = pow(ggxColor, vec3(.4545)); // back to gamma
+    #endif
     return ggxColor;
 }
 
