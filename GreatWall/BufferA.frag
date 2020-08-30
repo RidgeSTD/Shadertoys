@@ -23,6 +23,16 @@ float dot2( in vec2 v ) { return dot(v,v); }
 float dot2( in vec3 v ) { return dot(v,v); }
 float ndot( in vec2 a, in vec2 b ) { return a.x*b.x - a.y*b.y; }
 
+vec2 opRepLim( in vec2 p, in float s, in vec2 lim )
+{
+    return p-s*clamp(round(p/s),-lim,lim);
+}
+
+vec2 opRepLim( in vec2 p, in float s, in vec2 limmin, in vec2 limmax )
+{
+    return p-s*clamp(round(p/s),-limmin,limmax);
+}
+
 // float sdPlane( vec3 p )
 // {
 // 	return p.y;
@@ -319,7 +329,9 @@ vec2 map( in vec3 pos )
 
     // one brick
     {
-        res = opU( res, vec2( sdBox( pos-vec3( 1.0,0.25, 0.0), vec3(0.3,0.1,0.3) ), 3.0 ) );
+        vec3 q = pos;
+        q.xz = opRepLim(q.xz, 0.32, vec2(5.0, 5.0));
+        res = opU( res, vec2( sdBox( q-vec3( 0.0,0.0, 0.0), vec3(0.1,0.05,0.1) ), 3.0 ) );
     }
     
     
@@ -354,7 +366,7 @@ vec2 raycast( in vec3 ro, in vec3 rd )
     // }
     
     // raymarch primitives   
-    vec2 tb = iBox( ro-vec3(0.0,0.4,-0.5), rd, vec3(2.5,0.41,3.0) );
+    vec2 tb = iBox( ro-vec3(0.0,0.4,-0.5), rd, vec3(20,20,20) );
     if( tb.x<tb.y && tb.y>0.0 && tb.x<tmax)
     {
         //return vec2(tb.x,2.0);
@@ -540,6 +552,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     // camera	
     vec3 ta = vec3( 0.5, -0.5, -0.6 );
     vec3 ro = ta + vec3( 4.5*cos(0.1*time + 7.0*mo.x), 1.3 + 2.0*mo.y, 4.5*sin(0.1*time + 7.0*mo.x) );
+    // vec3 ro = vec3(0, 0, -4.0);
     // camera-to-world transformation
     mat3 ca = setCamera( ro, ta, 0.0 );
 
