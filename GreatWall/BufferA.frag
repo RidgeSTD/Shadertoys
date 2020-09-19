@@ -10,10 +10,6 @@
 // COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-// Credits:
-// =>Ray marching templates, iq's "Raymarching-Primitives": https://www.shadertoy.com/view/Xds3zN
-// =>Reference image "The great wall of China": https://www.gettyimages.de/detail/foto/the-great-wall-of-china-lizenzfreies-bild/898484166
-
 // #if HW_PERFORMANCE==0
 #if 1
 #define AA 1
@@ -102,9 +98,13 @@ vec2 watchTower(in vec3 pos)
 }
 
 // return the height of current position
-float landscape(vec3 pos)
+vec3 landscapeOffset(vec3 pos)
 {
-    return sin(pos.z) +  pos.z * 0.3;
+    float y = sin(pos.z * 0.3) -  pos.z * 0.3;
+    y = 0.2 * sin(pos.z * 0.4) -  5.0 * sin(pos.z * 0.1);
+    float x = 1.0 * cos(pos.z*0.4) * (1.0 + clamp(pos.z * 0.3, 0.0, 2.0));
+    float z = 0.0;
+    return vec3(x, y, z);
 }
 
 vec2 map( in vec3 pos )
@@ -112,12 +112,11 @@ vec2 map( in vec3 pos )
     vec2 res = vec2( 1e10, 0.0 );
     
     // landscape offset
-    vec4 posMod = vec4(pos, pos.y + landscape(pos));
-    // posMod.w = posMod.y + posMod.w - mod(posMod.w, 0.1);
+    vec3 posMod = pos + landscapeOffset(pos);
 
     // base
     {
-        vec3 q = posMod.xwz;
+        vec3 q = posMod;
         q.xy = opRepLim(q.xy, vec2(0.11, 0.06), vec2(3.0, 3.0));
         q.z = opRepLim(q.z, 0.11, 80.0);
         
@@ -126,7 +125,7 @@ vec2 map( in vec3 pos )
     
     // inner wall
     {
-        vec3 q = posMod.xwz;
+        vec3 q = posMod;
         q.y -= 0.025 * 2.0 * 6.0;
         q.x -= 0.05 * 2.0 * 3.0 + 0.025;
         q.yz = opRepLim(q.yz, vec2(0.06, 0.11), vec2(1, 80));
@@ -135,12 +134,12 @@ vec2 map( in vec3 pos )
     
     // battlement wall
     {
-        vec3 q = posMod.xwz;
+        vec3 q = posMod;
         q.y -= 0.025 * 2.0 * 5.0;
         q.x += 0.05 * 2.0 * 3.0 + 0.025;
         q.yz = opRepLim(q.yz, vec2(0.06, 0.11), vec2(0.5, 80));
         res = opU( res, vec2( sdBox( q-vec3( 0.0,0.0, 0.0), vec3(0.05,0.025,0.05) ), 5.0 ) );
-        q = posMod.xwz;
+        q = posMod;
         q.y -= 0.025 * 2.0 * 7.0;
         q.x += 0.05 * 2.0 * 3.0 + 0.025;
         q.yz = opRepLim(q.yz, vec2(0.06, 0.17), vec2(0.5, 80));
@@ -155,7 +154,7 @@ vec2 map( in vec3 pos )
         // get the remain part of opRepLim function to project position
         // to local origin
         float midZ = watchTowerDis * clamp(round(q.z / watchTowerDis), -4.0, 4.0);
-        q.y += landscape(vec3(q.x, q.z, midZ));
+        q += landscapeOffset(vec3(q.x, q.y, midZ));
 
         q.z = opRepLim(q.z, watchTowerDis, 4.0);
         
@@ -193,6 +192,7 @@ vec2 raycast( in vec3 ro, in vec3 rd )
     //     res = vec2( tp1, 1.0 );
     // }
     
+    // bouding包围盒
     // raymarch primitives   
     vec2 tb = iBox( ro-vec3(0.0,0.4,-0.5), rd, vec3(20,20,20) );
     if( tb.x<tb.y && tb.y>0.0 && tb.x<tmax)
@@ -375,15 +375,16 @@ mat3 setCamera( in vec3 ro, in vec3 ta, float cr )
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     vec2 mo = iMouse.xy/iResolution.xy;
+    mo -= vec2(0.5,0.5);
 	float time = 32.0 + iTime*1.5;
 
     // camera
     float camRotRadius = 10.5;
-    float camRotSpeed = 0.0;
-    // float camRotSpeed = 0.1;
-    vec3 ta = vec3( 0.5, -0.5, -0.6 );
-    vec3 ro = ta + vec3( camRotRadius*cos(camRotSpeed*time + 7.0*mo.x), 1.3 + 2.0*mo.y, camRotRadius*sin(camRotSpeed*time + 7.0*mo.x) );
-    //vec3 ro = vec3(0, 0, -4.0);
+    // vec3 ta = vec3( 0.5, -0.5, -0.6 );
+    vec3 ta = vec3( 0, 1, 0 );
+    // vec3 ro = ta + vec3( camRotRadius*cos(camRotSpeed*time + 7.0*mo.x), 1.3 + 2.0*mo.y, camRotRadius*sin(camRotSpeed*time + 7.0*mo.x) );
+    vec3 ro = ta + vec3( 1, -4, -8.0 );
+    // ro += vec3( camRotRadius*mo.x, camRotRadius*mo.y, camRotRadius*mo.x );
     // camera-to-world transformation
     mat3 ca = setCamera( ro, ta, 0.0 );
 
