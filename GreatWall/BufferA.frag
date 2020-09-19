@@ -12,7 +12,8 @@
 //
 // https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
 
-#if HW_PERFORMANCE==0
+// #if HW_PERFORMANCE==0
+#if 1
 #define AA 1
 #else
 #define AA 2   // make this 2 or 3 for antialiasing
@@ -159,7 +160,10 @@ vec2 map( in vec3 pos )
         float watchTowerDis = 10.0;
         
         vec3 q = pos;
-        q;
+        // get the remain part of opRepLim function to project position
+        // to local origin
+        float midZ = watchTowerDis * clamp(round(q.z / watchTowerDis), -4.0, 4.0);
+        q.y += landscape(vec3(q.x, q.z, midZ));
 
         q.z = opRepLim(q.z, watchTowerDis, 4.0);
         
@@ -383,7 +387,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
     // camera	
     vec3 ta = vec3( 0.5, -0.5, -0.6 );
-     vec3 ro = ta + vec3( 4.5*cos(0.1*time + 7.0*mo.x), 1.3 + 2.0*mo.y, 4.5*sin(0.1*time + 7.0*mo.x) );
+    float camRotRadius = 10.5;
+    vec3 ro = ta + vec3( camRotRadius*cos(0.1*time + 7.0*mo.x), 1.3 + 2.0*mo.y, camRotRadius*sin(0.1*time + 7.0*mo.x) );
     //vec3 ro = vec3(0, 0, -4.0);
     // camera-to-world transformation
     mat3 ca = setCamera( ro, ta, 0.0 );
