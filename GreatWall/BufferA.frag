@@ -1,16 +1,18 @@
 // The MIT License
-// Copyright © 2013 Inigo Quilez
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+// Copyright © 2020 Ridge/winlandiano
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+// documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright
+// notice and this permission notice shall be included in all copies or substantial portions of the Software. THE
+// SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-// A list of useful distance function to simple primitives. All
-// these functions (except for ellipsoid) return an exact
-// euclidean distance, meaning they produce a better SDF than
-// what you'd get if you were constructing them from boolean
-// operations.
-//
-// More info here:
-//
-// https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
+// Credits:
+// =>Ray marching templates, iq's "Raymarching-Primitives": https://www.shadertoy.com/view/Xds3zN
+// =>Reference image "The great wall of China": https://www.gettyimages.de/detail/foto/the-great-wall-of-china-lizenzfreies-bild/898484166
 
 // #if HW_PERFORMANCE==0
 #if 1
@@ -43,16 +45,6 @@ vec2 opRepLim( in vec2 p, in float s, in vec2 limmin, in vec2 limmax )
 {
     return p-s*clamp(round(p/s),-limmin,limmax);
 }
-
-// float sdPlane( vec3 p )
-// {
-// 	return p.y;
-// }
-
-// float sdSphere( vec3 p, float s )
-// {
-//     return length(p)-s;
-// }
 
 float sdBox( vec3 p, vec3 b )
 {
@@ -385,10 +377,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     vec2 mo = iMouse.xy/iResolution.xy;
 	float time = 32.0 + iTime*1.5;
 
-    // camera	
-    vec3 ta = vec3( 0.5, -0.5, -0.6 );
+    // camera
     float camRotRadius = 10.5;
-    vec3 ro = ta + vec3( camRotRadius*cos(0.1*time + 7.0*mo.x), 1.3 + 2.0*mo.y, camRotRadius*sin(0.1*time + 7.0*mo.x) );
+    float camRotSpeed = 0.0;
+    // float camRotSpeed = 0.1;
+    vec3 ta = vec3( 0.5, -0.5, -0.6 );
+    vec3 ro = ta + vec3( camRotRadius*cos(camRotSpeed*time + 7.0*mo.x), 1.3 + 2.0*mo.y, camRotRadius*sin(camRotSpeed*time + 7.0*mo.x) );
     //vec3 ro = vec3(0, 0, -4.0);
     // camera-to-world transformation
     mat3 ca = setCamera( ro, ta, 0.0 );

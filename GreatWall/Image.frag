@@ -1,3 +1,5 @@
+#iChannel0 "file://BufferA.frag"
+
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     vec2 uv = fragCoord/iResolution.xy;
