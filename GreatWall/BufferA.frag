@@ -112,10 +112,7 @@ vec3 landscapeOffset(vec3 pos)
     return vec3(x, y, z);
 }
 
-vec2 map( in vec3 pos )
-{
-    vec2 res = vec2( 1e10, 0.0 );
-    
+void greatWall(in vec3 pos, inout vec2 res) {
     // landscape offset
     vec3 posMod = pos + landscapeOffset(pos);
 
@@ -165,7 +162,13 @@ vec2 map( in vec3 pos )
         
         res = opU( res, watchTower(q) );
     }
+}
+
+vec2 map( in vec3 pos )
+{
+    vec2 res = vec2( 1e10, 0.0 );
     
+    // greatWall(pos, res);    
     
     return res;
 }
