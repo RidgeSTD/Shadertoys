@@ -14,14 +14,13 @@
 // =>Ray marching templates, iq's "Raymarching-Primitives": https://www.shadertoy.com/view/Xds3zN
 // =>Reference image "Great wall in China": https://www.gettyimages.de/detail/foto/great-wall-lizenzfreies-bild/1051651510
 
-#iChannel0 "file://BufferA.frag"
+// #iChannel0 "file://BufferA.frag"
 
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
-{
-    vec2 uv = fragCoord/iResolution.xy;
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    vec2 uv = fragCoord / iResolution.xy;
 
     // gamma
-    vec3 col = pow(texture(iChannel0, uv).xyz, vec3(0.4545));;
+    vec3 col = pow(texture(iChannel0, uv).xyz, vec3(0.4545));
 
-    fragColor = vec4(col,1.0);
+    fragColor = vec4(col, 1.0);
 }

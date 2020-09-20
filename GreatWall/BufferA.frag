@@ -84,13 +84,13 @@ vec2 watchTower(in vec3 pos) {
 // return the height of current position
 vec3 landscapeOffset(vec3 pos) {
     float y = sin(pos.z * 0.3) - pos.z * 0.3;
-    y = 0.4 * sin(pos.z * 0.9) - 5.0 * sin(pos.z * 0.1);
+    y = 0.8 * sin(pos.z * 0.9) - 5.0 * sin(pos.z * 0.1);
     float x = 2.0 * cos(pos.z * 0.2) * (1.0 + clamp(pos.z * 0.3, 0.0, 2.0));
     // x = pos.z-4.5;
     // x = mix(min(-0.001,x), max(0.001,x), step(0.0, x)); // avoid divide by zero
-    x = (pos.z - 4.5) * 1.0;
+    x = pos.z;
+    x = x * max(0.7, x * 0.1) - 4.5;
     x = -4.0 * sin(x) / x;
-    // x = -1.1*pos.z;
     float z = 0.0;
     return vec3(x, y, z);
 }
@@ -141,7 +141,7 @@ void greatWall(in vec3 pos, inout vec2 res) {
         float midZ = watchTowerDis * clamp(round(q.z / watchTowerDis), -4.0, 4.0);
         q += landscapeOffset(vec3(q.x, q.y, midZ));
 
-        q.z = opRepLim(q.z, watchTowerDis, 4.0);
+        q.z = opRepLim(q.z, watchTowerDis, 2.0);
 
         res = opU(res, watchTower(q));
     }
@@ -150,7 +150,7 @@ void greatWall(in vec3 pos, inout vec2 res) {
 vec2 map(in vec3 pos) {
     vec2 res = vec2(1e10, 0.0);
 
-    // greatWall(pos, res);
+    greatWall(pos, res);
 
     return res;
 }
@@ -349,9 +349,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     float camRotRadius = 10.5;
     // vec3 ta = vec3( 0.5, -0.5, -0.6 );
     vec3 ta = vec3(0, 1, 0);
-    // vec3 ro = ta + vec3( camRotRadius*cos(camRotSpeed*time + 7.0*mo.x), 1.3 + 2.0*mo.y,
-    // camRotRadius*sin(camRotSpeed*time + 7.0*mo.x) );
-    vec3 ro = ta + vec3(0.6, -1.5, -3.5);
+    vec3 ro = ta + vec3(0.7, -0.8, -3.5);
+    // mouse interaction
     // ro += vec3( camRotRadius*mo.x, camRotRadius*mo.y, camRotRadius*mo.x );
     // camera-to-world transformation
     mat3 ca = setCamera(ro, ta, 0.0);
