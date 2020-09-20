@@ -101,8 +101,13 @@ vec2 watchTower(in vec3 pos)
 vec3 landscapeOffset(vec3 pos)
 {
     float y = sin(pos.z * 0.3) -  pos.z * 0.3;
-    y = 0.2 * sin(pos.z * 0.4) -  5.0 * sin(pos.z * 0.1);
-    float x = 1.0 * cos(pos.z*0.4) * (1.0 + clamp(pos.z * 0.3, 0.0, 2.0));
+    y = 0.4 * sin(pos.z * 0.9) -  5.0 * sin(pos.z * 0.1);
+    float x = 2.0 * cos(pos.z*0.2) * (1.0 + clamp(pos.z * 0.3, 0.0, 2.0));
+    // x = pos.z-4.5;
+    // x = mix(min(-0.001,x), max(0.001,x), step(0.0, x)); // avoid divide by zero
+    x = (pos.z-4.5) * 1.0;
+    x = -4.0 * sin(x)/x;
+    // x = -1.1*pos.z;
     float z = 0.0;
     return vec3(x, y, z);
 }
@@ -148,7 +153,7 @@ vec2 map( in vec3 pos )
     
     // watch tower
     {
-        float watchTowerDis = 10.0;
+        float watchTowerDis = 4.7;
         
         vec3 q = pos;
         // get the remain part of opRepLim function to project position
@@ -181,20 +186,12 @@ vec2 raycast( in vec3 ro, in vec3 rd )
 {
     vec2 res = vec2(-1.0,-1.0);
 
-    float tmin = 1.0;
+    float tmin = .3;
     float tmax = 20.0;
 
-    // // raytrace floor plane
-    // float tp1 = (0.0-ro.y)/rd.y;
-    // if( tp1>0.0 )
-    // {
-    //     tmax = min( tmax, tp1 );
-    //     res = vec2( tp1, 1.0 );
-    // }
-    
     // bouding包围盒
     // raymarch primitives   
-    vec2 tb = iBox( ro-vec3(0.0,0.4,-0.5), rd, vec3(20,20,20) );
+    vec2 tb = iBox( ro, rd, vec3(20,20,20) );
     if( tb.x<tb.y && tb.y>0.0 && tb.x<tmax)
     {
         //return vec2(tb.x,2.0);
@@ -202,7 +199,9 @@ vec2 raycast( in vec3 ro, in vec3 rd )
         tmax = min(tb.y,tmax);
 
         float t = tmin;
-        for( int i=0; i<70 && t<tmax; i++ )
+        // for( int i=0; i<70 && t<tmax; i++ )
+        // set max step to extreme high to avoid miss hitting when the view direction is almost parallel with surface
+        for( int i=0; i<500 && t<tmax; i++ )
         {
             vec2 h = map( ro+rd*t );
             if( abs(h.x)<(0.0001*t) )
@@ -383,7 +382,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     // vec3 ta = vec3( 0.5, -0.5, -0.6 );
     vec3 ta = vec3( 0, 1, 0 );
     // vec3 ro = ta + vec3( camRotRadius*cos(camRotSpeed*time + 7.0*mo.x), 1.3 + 2.0*mo.y, camRotRadius*sin(camRotSpeed*time + 7.0*mo.x) );
-    vec3 ro = ta + vec3( 1, -4, -8.0 );
+    vec3 ro = ta + vec3(0.6, -1.5, -3.5 );
     // ro += vec3( camRotRadius*mo.x, camRotRadius*mo.y, camRotRadius*mo.x );
     // camera-to-world transformation
     mat3 ca = setCamera( ro, ta, 0.0 );
