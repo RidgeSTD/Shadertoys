@@ -82,7 +82,7 @@ vec2 watchTower(in vec3 pos) {
 }
 
 // return the height of current position
-vec3 landscapeOffset(vec3 pos) {
+vec3 terrainOffset(vec3 pos) {
     float y = sin(pos.z * 0.3) - pos.z * 0.3;
     y = 0.8 * sin(pos.z * 0.9) - 5.0 * sin(pos.z * 0.1);
     float x = 2.0 * cos(pos.z * 0.2) * (1.0 + clamp(pos.z * 0.3, 0.0, 2.0));
@@ -96,8 +96,8 @@ vec3 landscapeOffset(vec3 pos) {
 }
 
 void greatWall(in vec3 pos, inout vec2 res) {
-    // landscape offset
-    vec3 posMod = pos + landscapeOffset(pos);
+    // terrain offset
+    vec3 posMod = pos + terrainOffset(pos);
 
     // base
     {
@@ -107,6 +107,9 @@ void greatWall(in vec3 pos, inout vec2 res) {
 
         res = opU(res, vec2(sdBox(q - vec3(0.0, 0.0, 0.0), vec3(0.05, 0.025, 0.05)), 3.0));
     }
+
+    // debug 在这里提前返回以调试墙基体
+    return;
 
     // inner wall
     {
@@ -139,7 +142,7 @@ void greatWall(in vec3 pos, inout vec2 res) {
         // get the remain part of opRepLim function to project position
         // to local origin
         float midZ = watchTowerDis * clamp(round(q.z / watchTowerDis), -4.0, 4.0);
-        q += landscapeOffset(vec3(q.x, q.y, midZ));
+        q += terrainOffset(vec3(q.x, q.y, midZ));
 
         q.z = opRepLim(q.z, watchTowerDis, 2.0);
 
@@ -151,6 +154,14 @@ vec2 map(in vec3 pos) {
     vec2 res = vec2(1e10, 0.0);
 
     greatWall(pos, res);
+
+    // terrain
+    // {
+    //     float h = textureGood(iChannel0, p.xy * 0.0004).x;
+    //     float d = textureLod(iChannel1, p * 0.01, 0.0).y;
+    //     h -= 0.002*d*d*d;
+    //     res = opU(res, vec2(pos.y - h, 4.0));
+    // }
 
     return res;
 }
@@ -351,7 +362,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec3 ta = vec3(0, 1, 0);
     vec3 ro = ta + vec3(0.7, -0.8, -3.5);
     // mouse interaction
-    // ro += vec3( camRotRadius*mo.x, camRotRadius*mo.y, camRotRadius*mo.x );
+    ro += vec3( camRotRadius*mo.x, camRotRadius*mo.y, camRotRadius*mo.x );
     // camera-to-world transformation
     mat3 ca = setCamera(ro, ta, 0.0);
 
