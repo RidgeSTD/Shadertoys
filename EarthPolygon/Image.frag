@@ -1,9 +1,18 @@
 // https://www.desmos.com/calculator/9in2aizsi9
 
-#define POLYGON_COUNT 26
+#define RADIUS 0.5
 
-#define IN_POLYGON(vs,vc,p,isIn) {isIn=false;if(vc>=0){for(int i = 0, j = vc - 1; i < vc; j = i++){if ( (vs[i].y > p.y) != (vs[j].y > p.y)&& (p.x - vs[i].x) > (vs[j].x - vs[i].x) * (p.y - vs[i].y) / (vs[j].y - vs[i].y)) {isIn = !isIn;}}}}
-#define DRAW_POLYGON(vs,vc,p,isIn,c,t,col) {IN_POLYGON(vs,vc,p,isIn);if(isIn){col=mix(col,c,t);}}
+#define POLYGON_COUNT 26
+#define PI 3.14159265359
+#define IN_POLYGON(vs,p,rotation,isIn) {isIn=false;int vc = vs.length();if(vc>=0){for(int i = 0, j = vc - 1; i < vc; j = i++){vec2 vsSphereI=sphereMapping(vs[i],rotation);vec2 vsSphereJ=sphereMapping(vs[j],rotation);if ( (vsSphereI.y > p.y) != (vsSphereJ.y > p.y)&& (p.x - vsSphereI.x) > (vsSphereJ.x - vsSphereI.x) * (p.y - vsSphereI.y) / (vsSphereJ.y - vsSphereI.y)) {isIn = !isIn;}}}}
+#define DRAW_POLYGON(vs,p,rotation,isIn,c,t,col) {IN_POLYGON(vs,p,rotation,isIn);if(isIn){col=mix(col,c,t);}}
+
+vec2 sphereMapping(vec2 uv, vec2 rotation)
+{
+    float xSphere = -cos(uv.y)*cos(uv.x + rotation.x);
+    float ySphere = -cos(uv.y) * sin(rotation.y) * sin(uv.x + rotation.x) + sin(uv.y) * cos(rotation.y);
+    return vec2(xSphere, ySphere);
+}
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
@@ -13,7 +22,6 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     p.x *= iResolution.x / iResolution.y;
 
     float[POLYGON_COUNT] transparencyPolygon;
-    // transparencyPolygon[0] = transparencyPolygon[1] = transparencyPolygon[2] = transparencyPolygon[3] = 0.5;
     transparencyPolygon[0] 
     = transparencyPolygon[1] 
     = transparencyPolygon[2]
@@ -97,37 +105,38 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     vec2[] verticesPolygon23 = vec2[](vec2(3.083,-0.3213),vec2(3.0786,-0.303),vec2(3.0956,-0.2887),vec2(3.1144,-0.2752),vec2(3.142,-0.266),vec2(3.1635,-0.273),vec2(3.141,-0.293),vec2(3.122,-0.299),vec2(3.116,-0.322),vec2(3.097,-0.327));
     vec2[] verticesPolygon24 = vec2[](vec2(0.791,1.402),vec2(0.83,1.404),vec2(0.8675,1.407),vec2(0.8984,1.4006),vec2(0.929,1.397),vec2(0.897,1.388),vec2(0.857,1.3806),vec2(0.821,1.3755),vec2(0.791,1.3794));
     vec2[] verticesPolygon25 = vec2[](vec2(2.376,1.2996),vec2(2.3936,1.32),vec2(2.441,1.323),vec2(2.487,1.32),vec2(2.524,1.312),vec2(2.546,1.291),vec2(2.588,1.2834),vec2(2.622,1.2834),vec2(2.624,1.3035),vec2(2.584,1.309),vec2(2.546,1.312),vec2(2.519,1.285),vec2(2.479,1.289),vec2(2.437,1.2865),vec2(2.4005,1.292));
-
+    
     // Output to screen
     vec3 col = vec3(1);
 
     bool isIn;
-    DRAW_POLYGON(verticesPolygon0, verticesPolygon0.length(), p, isIn, colorPolygon[0], transparencyPolygon[0], col);
-    DRAW_POLYGON(verticesPolygon1, verticesPolygon1.length(), p, isIn, colorPolygon[1], transparencyPolygon[1], col);
-    DRAW_POLYGON(verticesPolygon2, verticesPolygon2.length(), p, isIn, colorPolygon[2], transparencyPolygon[2], col);
-    DRAW_POLYGON(verticesPolygon3, verticesPolygon3.length(), p, isIn, colorPolygon[3], transparencyPolygon[3], col);
-    DRAW_POLYGON(verticesPolygon4, verticesPolygon4.length(), p, isIn, colorPolygon[4], transparencyPolygon[4], col);
-    DRAW_POLYGON(verticesPolygon5, verticesPolygon5.length(), p, isIn, colorPolygon[5], transparencyPolygon[5], col);
-    DRAW_POLYGON(verticesPolygon6, verticesPolygon6.length(), p, isIn, colorPolygon[6], transparencyPolygon[6], col);
-    DRAW_POLYGON(verticesPolygon7, verticesPolygon7.length(), p, isIn, colorPolygon[7], transparencyPolygon[7], col);
-    DRAW_POLYGON(verticesPolygon8, verticesPolygon8.length(), p, isIn, colorPolygon[8], transparencyPolygon[8], col);
-    DRAW_POLYGON(verticesPolygon9, verticesPolygon9.length(), p, isIn, colorPolygon[9], transparencyPolygon[9], col);
-    DRAW_POLYGON(verticesPolygon10, verticesPolygon10.length(), p, isIn, colorPolygon[10], transparencyPolygon[10], col);
-    DRAW_POLYGON(verticesPolygon11, verticesPolygon11.length(), p, isIn, colorPolygon[11], transparencyPolygon[11], col);
-    DRAW_POLYGON(verticesPolygon12, verticesPolygon12.length(), p, isIn, colorPolygon[12], transparencyPolygon[12], col);
-    DRAW_POLYGON(verticesPolygon13, verticesPolygon13.length(), p, isIn, colorPolygon[13], transparencyPolygon[13], col);
-    DRAW_POLYGON(verticesPolygon14, verticesPolygon14.length(), p, isIn, colorPolygon[14], transparencyPolygon[14], col);
-    DRAW_POLYGON(verticesPolygon15, verticesPolygon15.length(), p, isIn, colorPolygon[15], transparencyPolygon[15], col);
-    DRAW_POLYGON(verticesPolygon16, verticesPolygon16.length(), p, isIn, colorPolygon[16], transparencyPolygon[16], col);
-    DRAW_POLYGON(verticesPolygon17, verticesPolygon17.length(), p, isIn, colorPolygon[17], transparencyPolygon[17], col);
-    DRAW_POLYGON(verticesPolygon18, verticesPolygon18.length(), p, isIn, colorPolygon[18], transparencyPolygon[18], col);
-    DRAW_POLYGON(verticesPolygon19, verticesPolygon19.length(), p, isIn, colorPolygon[19], transparencyPolygon[19], col);
-    DRAW_POLYGON(verticesPolygon20, verticesPolygon20.length(), p, isIn, colorPolygon[20], transparencyPolygon[20], col);
-    DRAW_POLYGON(verticesPolygon21, verticesPolygon21.length(), p, isIn, colorPolygon[21], transparencyPolygon[21], col);
-    DRAW_POLYGON(verticesPolygon22, verticesPolygon22.length(), p, isIn, colorPolygon[22], transparencyPolygon[22], col);
-    DRAW_POLYGON(verticesPolygon23, verticesPolygon23.length(), p, isIn, colorPolygon[23], transparencyPolygon[23], col);
-    DRAW_POLYGON(verticesPolygon24, verticesPolygon24.length(), p, isIn, colorPolygon[24], transparencyPolygon[24], col);
-    DRAW_POLYGON(verticesPolygon25, verticesPolygon25.length(), p, isIn, colorPolygon[25], transparencyPolygon[25], col);
+    vec2 rotation = vec2(mod(iTime * 0.9, 2. * PI), 0.0);
+    DRAW_POLYGON(verticesPolygon0, p, rotation, isIn, colorPolygon[0], transparencyPolygon[0], col);
+    DRAW_POLYGON(verticesPolygon1, p, rotation, isIn, colorPolygon[1], transparencyPolygon[1], col);
+    DRAW_POLYGON(verticesPolygon2, p, rotation, isIn, colorPolygon[2], transparencyPolygon[2], col);
+    DRAW_POLYGON(verticesPolygon3, p, rotation, isIn, colorPolygon[3], transparencyPolygon[3], col);
+    DRAW_POLYGON(verticesPolygon4, p, rotation, isIn, colorPolygon[4], transparencyPolygon[4], col);
+    DRAW_POLYGON(verticesPolygon5, p, rotation, isIn, colorPolygon[5], transparencyPolygon[5], col);
+    DRAW_POLYGON(verticesPolygon6, p, rotation, isIn, colorPolygon[6], transparencyPolygon[6], col);
+    DRAW_POLYGON(verticesPolygon7, p, rotation, isIn, colorPolygon[7], transparencyPolygon[7], col);
+    DRAW_POLYGON(verticesPolygon8, p, rotation, isIn, colorPolygon[8], transparencyPolygon[8], col);
+    DRAW_POLYGON(verticesPolygon9, p, rotation, isIn, colorPolygon[9], transparencyPolygon[9], col);
+    DRAW_POLYGON(verticesPolygon10, p, rotation, isIn, colorPolygon[10], transparencyPolygon[10], col);
+    DRAW_POLYGON(verticesPolygon11, p, rotation, isIn, colorPolygon[11], transparencyPolygon[11], col);
+    DRAW_POLYGON(verticesPolygon12, p, rotation, isIn, colorPolygon[12], transparencyPolygon[12], col);
+    DRAW_POLYGON(verticesPolygon13, p, rotation, isIn, colorPolygon[13], transparencyPolygon[13], col);
+    DRAW_POLYGON(verticesPolygon14, p, rotation, isIn, colorPolygon[14], transparencyPolygon[14], col);
+    DRAW_POLYGON(verticesPolygon15, p, rotation, isIn, colorPolygon[15], transparencyPolygon[15], col);
+    DRAW_POLYGON(verticesPolygon16, p, rotation, isIn, colorPolygon[16], transparencyPolygon[16], col);
+    DRAW_POLYGON(verticesPolygon17, p, rotation, isIn, colorPolygon[17], transparencyPolygon[17], col);
+    DRAW_POLYGON(verticesPolygon18, p, rotation, isIn, colorPolygon[18], transparencyPolygon[18], col);
+    DRAW_POLYGON(verticesPolygon19, p, rotation, isIn, colorPolygon[19], transparencyPolygon[19], col);
+    DRAW_POLYGON(verticesPolygon20, p, rotation, isIn, colorPolygon[20], transparencyPolygon[20], col);
+    DRAW_POLYGON(verticesPolygon21, p, rotation, isIn, colorPolygon[21], transparencyPolygon[21], col);
+    DRAW_POLYGON(verticesPolygon22, p, rotation, isIn, colorPolygon[22], transparencyPolygon[22], col);
+    DRAW_POLYGON(verticesPolygon23, p, rotation, isIn, colorPolygon[23], transparencyPolygon[23], col);
+    DRAW_POLYGON(verticesPolygon24, p, rotation, isIn, colorPolygon[24], transparencyPolygon[24], col);
+    DRAW_POLYGON(verticesPolygon25, p, rotation, isIn, colorPolygon[25], transparencyPolygon[25], col);
 
     fragColor = vec4(col,1.0);
 }
